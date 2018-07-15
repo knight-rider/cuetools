@@ -1,0 +1,1 @@
+make reset;libtoolize;autoreconf -vfis;./configure;make

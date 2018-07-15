@@ -1,0 +1,4 @@
+3.0.0
+	initial release, merged back libcue to cuetools
+	libcue 2.2.1: https://github.com/lipnitsk/libcue
+	cuetools 1.4.0: https://github.com/svend/cuetools
