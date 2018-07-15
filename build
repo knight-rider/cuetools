@@ -1,1 +1,1 @@
-make reset;libtoolize;autoreconf -vfis;./configure;make
+make reset;autoreconf -vfis;./configure --prefix /usr;make
