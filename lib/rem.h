@@ -11,7 +11,7 @@
 #include "libcue.h"
 
 struct Rem {
-	unsigned int cmt;
+	enum RemType cmt;
 	char *value;
 };
 

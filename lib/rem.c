@@ -70,7 +70,7 @@ void rem_set(unsigned int cmt, char* value, struct Rem *rem)
 	while ((++rem)->cmt != REM_END);
 }
 
-const char *rem_get(enum RemType cmt, struct Rem *rem)
+char *rem_get(enum RemType cmt, struct Rem *rem)
 {
 	if (!rem)
 		return NULL;

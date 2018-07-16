@@ -16,29 +16,29 @@ struct Data {
 	int		type;
 	char	*name;
 	long	start,
-			length;
+		length;
 };
 
 struct Track {
-	struct Data	zero_pre,		// pre-gap generated with zero data
-				file,			// track data file
-				zero_post;		// post-gap generated with zero data
-	int			mode,			// track mode
-				sub_mode,		// sub-channel mode
-				flags;			// flags
-	char		*isrc;			// IRSC Code (5.22.4) 12 bytes
+	struct Data	zero_pre,	// pre-gap generated with zero data
+			file,		// track data file
+			zero_post;	// post-gap generated with zero data
+	int		mode,		// track mode
+			sub_mode,	// sub-channel mode
+			flags;		// flags
+	char		*isrc;		// IRSC Code (5.22.4) 12 bytes
 	struct Cdtext	*cdtext;
-	struct Rem*		rem;
-	long	index[MAXINDEX];	// indexes (in frames, 5.29.2.5) relative to start of file
+	struct Rem*	rem;
+	long		index[MAXINDEX];	// indexes (in frames, 5.29.2.5) relative to start of file
 };
 
 struct Cd {
-	int				mode;			// disc mode
-	char			*catalog,		// Media Catalog Number (5.22.3)
-					*cdtextfile;	// Filename of CDText File
+	int		mode;		// disc mode
+	char		*catalog,	// Media Catalog Number (5.22.3)
+			*cdtextfile;	// Filename of CDText File
 	struct Cdtext	*cdtext;
-	struct Rem*		rem;
-	int				ntrack;			// number of tracks in album
+	struct Rem*	rem;
+	int		ntrack;		// number of tracks in album
 	struct Track	*track[MAXTRACK];
 };
 
@@ -148,7 +148,6 @@ void cd_set_catalog(struct Cd *cd, char *catalog)
 {
 	if (cd->catalog)
 		free(cd->catalog);
-
 	cd->catalog = strdup(catalog);
 }
 
@@ -233,7 +232,7 @@ long track_get_length(const struct Track *track)
 	return track->file.length;
 }
 
-void track_set_mode(struct Track *track, int mode)
+void track_set_mode(struct Track *track, enum TrackMode mode)
 {
 	track->mode = mode;
 }
@@ -243,7 +242,7 @@ enum TrackMode track_get_mode(const struct Track *track)
 	return track->mode;
 }
 
-void track_set_sub_mode(struct Track *track, int sub_mode)
+void track_set_sub_mode(struct Track *track, enum TrackSubMode sub_mode)
 {
 	track->sub_mode = sub_mode;
 }
@@ -253,12 +252,12 @@ enum TrackSubMode track_get_sub_mode(const struct Track *track)
 	return track->sub_mode;
 }
 
-void track_set_flag(struct Track *track, int flag)
+void track_set_flag(struct Track *track, enum TrackFlag flag)
 {
 	track->flags |= flag;
 }
 
-void track_clear_flag(struct Track *track, int flag)
+void track_clear_flag(struct Track *track, enum TrackFlag flag)
 {
 	track->flags &= ~flag;
 }

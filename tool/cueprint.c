@@ -14,10 +14,10 @@
 #include "cd.h"
 
 #if HAVE_CONFIG_H
-#include "config.h"
-#else /* not HAVE_CONFIG_H */
-#define PACKAGE_STRING "cueprint"
-#endif /* HAVE_CONFIG_H */
+#	include "config.h"
+#else
+#	define PACKAGE_STRING "cueprint"
+#endif
 
 /* default templates */
 
@@ -25,6 +25,7 @@
 Disc Information\n\
 arranger:	%A\n\
 composer:	%C\n\
+date:		%D\n\
 genre:		%G\n\
 message:	%M\n\
 no. of tracks:	%N\n\
@@ -82,26 +83,24 @@ void usage(int status)
 	} else
 		fprintf(stderr, "Try `%s --help' for more information.\n", progname);
 
-	exit (status);
+	exit(status);
 }
 
 /* Print version information and exit */
 void version()
 {
 	printf("%s\n", PACKAGE_STRING);
-
 	exit(0);
 }
 
-/*
- * TODO: Shouldn't we be using vprintf() to help us out with this stuff?
- * (Branden Robinson)
- */
+// TODO: Shouldn't we be using vprintf() to help us out with this stuff? (Branden Robinson)
 void disc_field(char *conv, int length, struct Cd *cd, union Value *value)
 {
-	struct Cdtext *cdtext = cd_get_cdtext(cd);
+	struct Cdtext	*cdtext	= cd_get_cdtext(cd);
+	struct Rem		*rem	= cd_get_rem(cd);
 	char *c = conv + length - 1;	// pointer to conversion character
 
+//printf("DEBUG %s:%s cdtext:%p\n", __FILE__, __FUNCTION__, cdtext);
 	/*
 	 * After setting value, set *c to specify value type:
 	 * 'd' integer
@@ -115,6 +114,10 @@ void disc_field(char *conv, int length, struct Cd *cd, union Value *value)
 		break;
 	case 'C':
 		value->sval = cdtext_get(PTI_COMPOSER, cdtext);
+		*c = 's';
+		break;
+	case 'D':
+		value->sval = rem_get(REM_DATE, rem);
 		*c = 's';
 		break;
 	case 'G':
@@ -163,6 +166,7 @@ void track_field(char *conv, int length, struct Cd *cd, int trackno, union Value
 	struct Track	*track	= cd_get_track(cd, trackno);
 	struct Cdtext	*cdtext	= track_get_cdtext(track);
 
+//printf("DEBUG %s:%s cdtext:%p\n", __FILE__, __FUNCTION__, cdtext);
 	switch (*c) {
 	case 'a':
 		value->sval = cdtext_get(PTI_ARRANGER, cdtext);
@@ -178,6 +182,8 @@ void track_field(char *conv, int length, struct Cd *cd, int trackno, union Value
 		break;
 	case 'g':
 		value->sval = cdtext_get(PTI_GENRE, cdtext);
+		if (!value->sval)
+			value->sval = cdtext_get(PTI_GENRE, cd_get_cdtext(cd));
 		*c = 's';
 		break;
 	case 'i':
@@ -231,7 +237,7 @@ void print_conv(char *start, int length, struct Cd *cd, int trackno)
 	conv[length] = '\0';
 
 	/* conversion character */
-	if (0 == trackno)
+	if (!trackno)
 		disc_field(conv, length, cd, &value);
 	else
 		track_field(conv, length, cd, trackno, &value);
@@ -246,7 +252,7 @@ void print_conv(char *start, int length, struct Cd *cd, int trackno)
 		printf(conv, value.ival);
 		break;
 	case 's':
-		if (NULL == value.sval)
+		if (!value.sval)
 			printf(conv, VALUE_UNSET);
 		else
 			printf(conv, value.sval);
@@ -259,13 +265,13 @@ void print_conv(char *start, int length, struct Cd *cd, int trackno)
 	free(conv);
 }
 
-void cd_printf(char *format, struct Cd *cd, int trackno)
+void cd_printf(char *template, struct Cd *cd, int trackno)
 {
-	char *c;	/* pointer into format */
+	char *c;	/* pointer into template */
 	char *conv_start;
 	int conv_length;
 
-	for (c = format; '\0' != *c; c++) {
+	for (c = template; '\0' != *c; c++) {
 		if ('%' == *c) {
 			conv_start = c;
 			conv_length = 1;
@@ -317,10 +323,10 @@ void cd_printf(char *format, struct Cd *cd, int trackno)
 
 int info(char *name, enum Format format, int trackno, char *d_template, char *t_template)
 {
-	struct Cd *cd = NULL;
+	struct Cd *cd = cf_parse(name, &format);
 	int ntrack;
 
-	if (!(cd = cf_parse(name, &format))) {
+	if (!cd) {
 		fprintf(stderr, "%s: error: unable to parse input file"
 		        " `%s'\n", progname, name);
 		return -1;
@@ -333,7 +339,7 @@ int info(char *name, enum Format format, int trackno, char *d_template, char *t_
 
 		for (trackno = 1; trackno <= ntrack; trackno++)
 			cd_printf(t_template, cd, trackno);
-	} else if (0 == trackno)
+	} else if (!trackno)
 		cd_printf(d_template, cd, trackno);
 	else if (0 < trackno && ntrack >= trackno)
 		cd_printf(t_template, cd, trackno);
@@ -348,54 +354,28 @@ int info(char *name, enum Format format, int trackno, char *d_template, char *t_
 /* 
  * Translate escape sequences in a string.
  * The string is overwritten and terminated.
- * TODO: this does not handle octal and hexidecimal escapes
- *       except for \0
+ * TODO: this does not handle octal and hexidecimal escapes except for \0
  */
 void translate_escapes(char *s)
 {
-	char *read;
-	char *write;
-
-	read = s;
-	write = s;
+	char	*read	= s,
+			*write	= s;
 
 	while ('\0' != *read) {
 		if ('\\' == *read) {
 			read++;
 
-			switch (*read) {
-			case 'a':
-				*write = '\a';
-				break;
-			case 'b':
-				*write = '\b';
-				break;
-			case 'f':
-				*write = '\f';
-				break;
-			case 'n':
-				*write = '\n';
-				break;
-			case 'r':
-				*write = '\r';
-				break;
-			case 't':
-				*write = '\t';
-				break;
-			case 'v':
-				*write = '\v';
-				break;
-			case '0':
-				*write = '\0';
-				break;
-			default:
-				/* ?, ', " are handled by the default */
-				*write = *read;
-				break;
-			}
-		} else {
+			*write	= *read == 'a' ? '\a'
+					: *read == 'b' ? '\b'
+					: *read == 'f' ? '\f'
+					: *read == 'n' ? '\n'
+					: *read == 'r' ? '\r'
+					: *read == 't' ? '\t'
+					: *read == 'v' ? '\v'
+					: *read == '0' ? '\0'
+					: *read;	// ?, ', " are handled by the default
+		} else
 			*write = *read;
-		}
 
 		read++;
 		write++;
@@ -406,26 +386,25 @@ void translate_escapes(char *s)
 
 int main(int argc, char *argv[])
 {
-	enum Format format = UNKNOWN;
-	int trackno = -1;		/* track number (-1 = unspecified,
-					                  0 = disc info) */
-	char *d_template = NULL;	/* disc template */
-	char *t_template = NULL;	/* track template */
-	int ret = 0;			/* return value of info() */
+	enum Format	format		= UNKNOWN;
+	int		trackno		= -1,	// track number (-1 = unspecified, 0 = disc info)
+			ret		= 0;	// return value of info()
+	char		*d_template	= NULL,	// disc template
+			*t_template	= NULL;	// track template
 
 	/* option variables */
-	int c;
+	int	c;
 	/* getopt_long() variables */
-	extern char *optarg;
-	extern int optind;
+	extern char	*optarg;
+	extern int	optind;
 
 	static struct option longopts[] = {
-		{"help", no_argument, NULL, 'h'},
-		{"input-format", required_argument, NULL, 'i'},
-		{"track-number", required_argument, NULL, 'n'},
-		{"disc-template", required_argument, NULL, 'd'},
-		{"track-template", required_argument, NULL, 't'},
-		{"version", no_argument, NULL, 'V'},
+		{"help",		no_argument,		NULL, 'h'},
+		{"input-format",	required_argument,	NULL, 'i'},
+		{"track-number",	required_argument,	NULL, 'n'},
+		{"disc-template",	required_argument,	NULL, 'd'},
+		{"track-template",	required_argument,	NULL, 't'},
+		{"version",		no_argument,		NULL, 'V'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -437,9 +416,9 @@ int main(int argc, char *argv[])
 			usage(0);
 			break;
 		case 'i':
-			if (0 == strcmp("cue", optarg))
+			if (!strcmp("cue", optarg))
 				format = CUE;
-			else if (0 == strcmp("toc", optarg))
+			else if (!strcmp("toc", optarg))
 				format = TOC;
 			else {
 				fprintf(stderr, "%s: error: unknown input file"
@@ -471,10 +450,9 @@ int main(int argc, char *argv[])
 		d_template = strdup(D_TEMPLATE);
 		t_template = strdup(T_TEMPLATE);
 	} else {
-		if (NULL == d_template)
+		if (!d_template)
 			d_template = strdup("");
-
-		if (NULL == t_template)
+		if (!t_template)
 			t_template = strdup("");
 	}
 

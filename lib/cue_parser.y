@@ -14,16 +14,13 @@
 #include "cue_parse_prefix.h"
 
 #ifdef YY_BUF_SIZE
-#undef YY_BUF_SIZE
+#	undef YY_BUF_SIZE
 #endif
 #define YY_BUF_SIZE 16384
 
 #define YYDEBUG 1
 
 char fnamebuf[PARSER_BUFFER];
-
-/* debugging */
-//int yydebug = 1;
 
 extern int yylineno;
 extern FILE* yyin;
@@ -46,11 +43,6 @@ YY_BUFFER_STATE yy_scan_string(const char*);
 YY_BUFFER_STATE yy_create_buffer(FILE*, int);
 void yy_switch_to_buffer(YY_BUFFER_STATE);
 void yy_delete_buffer(YY_BUFFER_STATE);
-
-/* parser interface */
-//int yyparse(void);
-//struct Cd *cue_parse_file(FILE *fp);
-//struct Cd *cue_parse_string(const char*);
 %}
 
 %start cuefile
@@ -123,7 +115,7 @@ void yy_delete_buffer(YY_BUFFER_STATE);
 /* REM */
 %type <ival> rem_item
 %token <ival> DATE
-%token <ival> XXX_GENRE /* parsed in REM but stored in CD-TEXT */
+%token <ival> REM_GENRE /* parsed in REM but stored in CD-TEXT */
 %token <ival> REPLAYGAIN_ALBUM_GAIN
 %token <ival> REPLAYGAIN_ALBUM_PEAK
 %token <ival> REPLAYGAIN_TRACK_GAIN
@@ -197,10 +189,10 @@ new_track
 		rem = track_get_rem(track);
 
 		cur_filename = new_filename;
-		if (NULL != cur_filename)
+		if (cur_filename)
 			prev_filename = cur_filename;
 
-		if (NULL == prev_filename)
+		if (!prev_filename)
 			yyerror("no file specified for track");
 		else
 			track_set_filename(track, prev_filename);
@@ -241,8 +233,7 @@ track_statement
 		long prev_length;
 
 		/* Set previous track length if it has not been set */
-		if (NULL != prev_track && NULL == cur_filename
-		    && track_get_length (prev_track) == -1) {
+		if (prev_track && !cur_filename && track_get_length (prev_track) == -1) {
 			/* track shares file with previous track */
 			prev_length = $3 - track_get_start(prev_track);
 			track_set_length(prev_track, prev_length);
@@ -254,7 +245,7 @@ track_statement
 
 			long idx00 = track_get_index (track, 0);
 
-			if (idx00 != -1 && $3 != 0)
+			if (idx00 != -1 && $3)
 				track_set_zero_pre (track, $3 - idx00);
 		}
 
@@ -304,7 +295,7 @@ time
 
 rem
 	: rem_item STRING '\n' { rem_set($1, $2, rem); }
-	| XXX_GENRE STRING '\n' { cdtext_set($1, $2, cdtext); }
+	| REM_GENRE STRING '\n' { cdtext_set($1, $2, cdtext); }
 	;
 
 rem_item
@@ -343,8 +334,8 @@ struct Cd *cue_parse_file(FILE *fp)
 	yy_switch_to_buffer(buffer);
 	struct Cd *ret_cd = NULL;
 
-fprintf(stderr, "DEBUG %s\n", __FUNCTION__);
-	if (0 == yyparse()) ret_cd = cd;
+//fprintf(stderr, "DEBUG %s:%s\n", __FILE__, __FUNCTION__);
+	if (!yyparse()) ret_cd = cd;
 
 	yy_delete_buffer(buffer);
 	reset_static_vars();
@@ -358,8 +349,8 @@ struct Cd *cue_parse_string(const char* string)
 	buffer = yy_scan_string(string);
 	struct Cd *ret_cd = NULL;
 
-fprintf(stderr, "DEBUG %s\n", __FUNCTION__);
-	if (0 == yyparse()) ret_cd = cd;
+//fprintf(stderr, "DEBUG %s:%s\n", __FILE__, __FUNCTION__);
+	if (!yyparse()) ret_cd = cd;
 
 	yy_delete_buffer(buffer);
 	reset_static_vars();

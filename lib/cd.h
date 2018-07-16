@@ -7,7 +7,6 @@
 */
 
 // ref: MMC-3 draft revsion - 10g
-
 #ifndef CD_H
 #define CD_H
 
@@ -21,7 +20,6 @@
 
 enum Format {CUE, TOC, UNKNOWN};
 
-/* return pointer to CD structure */
 struct Cd *cd_init(void);
 struct Track *track_init(void);
 void track_delete(struct Track* track);
@@ -33,26 +31,17 @@ void cd_set_catalog(struct Cd *cd, char *catalog);
 char *cd_get_catalog(struct Cd *cd);
 void cd_set_cdtextfile(struct Cd *cd, char *cdtextfile);
 
-/*
- * add a new track to cd, increment number of tracks
- * and return pointer to new track
- */
+// add new track to cd, increment no. of tracks, return pointer to new track
 struct Track *cd_add_track(struct Cd *cd);
 
 // Track functions
-/* filename of data file */
-void track_set_filename(struct Track *track, char *filename);
-/* track start is starting position in data file */
-void track_set_start(struct Track *track, long start);
-/* track length is length of data file to use */
-void track_set_length(struct Track *track, long length);
-/* see enum TrackMode */
-void track_set_mode(struct Track *track, int mode);
-/* see enum TrackSubMode */
-void track_set_sub_mode(struct Track *track, int sub_mode);
-/* see enum TrackFlag */
-void track_set_flag(struct Track *track, int flag);
-void track_clear_flag(struct Track *track, int flag);
+void track_set_filename(struct Track *track, char *filename);	// filename of data file
+void track_set_start(struct Track *track, long start);			// starting position in data file
+void track_set_length(struct Track *track, long length);		// length of data file to use
+void track_set_mode(struct Track *track, enum TrackMode mode);
+void track_set_sub_mode(struct Track *track, enum TrackSubMode sub_mode);
+void track_set_flag(struct Track *track, enum TrackFlag flag);
+void track_clear_flag(struct Track *track, enum TrackFlag flag);
 
 void track_set_zero_pre(struct Track *track, long length);
 void track_set_zero_post(struct Track *track, long length);

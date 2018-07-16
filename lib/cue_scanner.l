@@ -101,15 +101,15 @@ ISRC		{ BEGIN(NAME); return TRACK_ISRC; }
 REM		{ BEGIN(REM); /* exclusive rules for special exceptions */ }
 
 <REM>DATE			{ BEGIN(NAME); yylval.ival = REM_DATE; return DATE; }
-<REM>GENRE			{ BEGIN(NAME); yylval.ival = PTI_GENRE; return XXX_GENRE; }
+<REM>GENRE			{ BEGIN(NAME); yylval.ival = PTI_GENRE; return REM_GENRE; }
 <REM>REPLAYGAIN_ALBUM_GAIN 	{ BEGIN(RPG); yylval.ival = REM_REPLAYGAIN_ALBUM_GAIN;
-							return REPLAYGAIN_ALBUM_GAIN; }
+					return REPLAYGAIN_ALBUM_GAIN; }
 <REM>REPLAYGAIN_ALBUM_PEAK	{ BEGIN(RPG); yylval.ival = REM_REPLAYGAIN_ALBUM_PEAK;
-							return REPLAYGAIN_ALBUM_PEAK; }
+					return REPLAYGAIN_ALBUM_PEAK; }
 <REM>REPLAYGAIN_TRACK_GAIN	{ BEGIN(RPG); yylval.ival = REM_REPLAYGAIN_TRACK_GAIN;
-							return REPLAYGAIN_TRACK_GAIN; }
+					return REPLAYGAIN_TRACK_GAIN; }
 <REM>REPLAYGAIN_TRACK_PEAK	{ BEGIN(RPG); yylval.ival = REM_REPLAYGAIN_TRACK_PEAK;
-							return REPLAYGAIN_TRACK_PEAK; }
+					return REPLAYGAIN_TRACK_PEAK; }
 
 <REM>{ws}+	{ BEGIN(REM); }
 <REM>.		{ BEGIN(REM); }

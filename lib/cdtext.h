@@ -17,17 +17,10 @@ enum PtiFormat {
 	FORMAT_BINARY		/* binary data */
 };
 
-/* return a pointer to a new Cdtext */
-struct Cdtext *cdtext_init(void);
-
-/* release a Cdtext */
-void cdtext_delete(struct Cdtext *cdtext);
-
-/* returns non-zero if there are no CD-TEXT fields set, zero otherwise */
-int cdtext_is_empty(struct Cdtext *cdtext);
-
-/* set CD-TEXT field to value for PTI pti */
-void cdtext_set(int pti, char *value, struct Cdtext *cdtext);
+struct Cdtext *cdtext_init(void);			// return a pointer to a new Cdtext
+void cdtext_delete(struct Cdtext *cdtext);	// release a Cdtext
+int cdtext_is_empty(struct Cdtext *cdtext);	// returns non-0 if no CD-TEXT field set, 0 otherwise
+void cdtext_set(int pti, char *value, struct Cdtext *cdtext);	// set CD-TEXT field to value for PTI pti
 
 /*
  * returns appropriate string for PTI pti

@@ -12,22 +12,22 @@
 #include "cdtext.h"
 
 struct Cdtext {
-	int	pti,
-		format;
-	char *value;
+	enum Pti		pti;
+	enum PtiFormat	format;
+	char			*value;
 };
 
 struct Cdtext *cdtext_init(void)
 {
 	struct Cdtext cdtext[] = {
-		{PTI_TITLE,		FORMAT_CHAR,	NULL},
+		{PTI_TITLE,			FORMAT_CHAR,	NULL},
 		{PTI_PERFORMER,		FORMAT_CHAR,	NULL},
 		{PTI_SONGWRITER,	FORMAT_CHAR,	NULL},
 		{PTI_COMPOSER,		FORMAT_CHAR,	NULL},
 		{PTI_ARRANGER,		FORMAT_CHAR,	NULL},
 		{PTI_MESSAGE,		FORMAT_CHAR,	NULL},
 		{PTI_DISC_ID,		FORMAT_BINARY,	NULL},
-		{PTI_GENRE,		FORMAT_BINARY,	NULL},
+		{PTI_GENRE,			FORMAT_BINARY,	NULL},
 		{PTI_TOC_INFO1,		FORMAT_BINARY,	NULL},
 		{PTI_TOC_INFO2,		FORMAT_BINARY,	NULL},
 		{PTI_RESERVED1,		FORMAT_CHAR,	NULL},
@@ -36,7 +36,7 @@ struct Cdtext *cdtext_init(void)
 		{PTI_RESERVED4,		FORMAT_CHAR,	NULL},
 		{PTI_UPC_ISRC,		FORMAT_CHAR,	NULL},
 		{PTI_SIZE_INFO,		FORMAT_BINARY,	NULL},
-		{PTI_END,		FORMAT_CHAR,	NULL}
+		{PTI_END,			FORMAT_CHAR,	NULL}
 	};
 
 	struct Cdtext *new_cdtext =
