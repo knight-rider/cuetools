@@ -1,7 +1,7 @@
 # Makefile.am - process with automake to produce Makefile.in
 
 bin_PROGRAMS = cuebreakpoints cueconvert cueprint
-bin_SCRIPTS = cuetag.sh
+bin_SCRIPTS = cuetag.sh cuesplit.sh
 
 LIBTOOL = /bin/libtool
 
