@@ -10,7 +10,7 @@
 
 #include "cd.h"
 #include "cue_parse_prefix.h"
-#include "cue_parser.h"
+#include "cue_parse.h"
 
 char yy_buffer[PARSER_BUFFER];
 
