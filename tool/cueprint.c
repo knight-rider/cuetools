@@ -97,8 +97,8 @@ void version()
 void disc_field(char *conv, int length, struct Cd *cd, union Value *value)
 {
 	struct Cdtext	*cdtext	= cd_get_cdtext(cd);
-	struct Rem		*rem	= cd_get_rem(cd);
-	char *c = conv + length - 1;	// pointer to conversion character
+	struct Rem	*rem	= cd_get_rem(cd);
+	char		*c	= conv + length - 1;	// pointer to conversion character
 
 //printf("DEBUG %s:%s cdtext:%p\n", __FILE__, __FUNCTION__, cdtext);
 	/*
@@ -278,13 +278,7 @@ void cd_printf(char *template, struct Cd *cd, int trackno)
 			c++;
 
 			/* flags */
-			while ( \
-				'-' == *c \
-				|| '+' == *c \
-				|| ' ' == *c \
-				|| '0' == *c \
-				|| '#' == *c \
-			) {
+			while ('-' == *c || '+' == *c || ' ' == *c || '0' == *c || '#' == *c) {
 				conv_length++;
 				c++;
 			}
@@ -315,9 +309,8 @@ void cd_printf(char *template, struct Cd *cd, int trackno)
 			conv_length++;
 
 			print_conv(conv_start, conv_length, cd, trackno);
-		} else {
+		} else
 			putchar(*c);
-		}
 	}
 }
 
@@ -366,14 +359,14 @@ void translate_escapes(char *s)
 			read++;
 
 			*write	= *read == 'a' ? '\a'
-					: *read == 'b' ? '\b'
-					: *read == 'f' ? '\f'
-					: *read == 'n' ? '\n'
-					: *read == 'r' ? '\r'
-					: *read == 't' ? '\t'
-					: *read == 'v' ? '\v'
-					: *read == '0' ? '\0'
-					: *read;	// ?, ', " are handled by the default
+				: *read == 'b' ? '\b'
+				: *read == 'f' ? '\f'
+				: *read == 'n' ? '\n'
+				: *read == 'r' ? '\r'
+				: *read == 't' ? '\t'
+				: *read == 'v' ? '\v'
+				: *read == '0' ? '\0'
+				: *read;	// ?, ', " are handled by the default
 		} else
 			*write = *read;
 
