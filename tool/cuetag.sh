@@ -61,27 +61,28 @@ vorbis()
 	# TRACKTOTAL is not in the Xiph recommendation, but is in common use
 
 	[ -n "$fields" ] ||
-	fields='TITLE VERSION ALBUM TRACKNUMBER TRACKTOTAL ARTIST PERFORMER COPYRIGHT LICENSE ORGANIZATION DESCRIPTION GENRE DATE LOCATION CONTACT ISRC'
+	fields='ALBUM ALBUMARTIST ARTIST CONTACT COPYRIGHT DATE DESCRIPTION GENRE ISRC LICENSE LOCATION ORGANIZATION PERFORMER TITLE TRACKNUMBER TRACKTOTAL VERSION'
 
 	# fields' corresponding cueprint conversion characters
 	# separate alternates with a space
 
-	TITLE='%t'
-	VERSION=''
 	ALBUM='%T'
-	TRACKNUMBER='%02n'
-	TRACKTOTAL='%02N'
+	ALBUMARTIST='%C %P'
 	ARTIST='%c %p'
-	PERFORMER='%p'
+	CONTACT=''
 	COPYRIGHT=''
-	LICENSE=''
-	ORGANIZATION=''
+	DATE='%D'
 	DESCRIPTION='%m'
 	GENRE='%g'
-	DATE='%D'
-	LOCATION=''
-	CONTACT=''
 	ISRC='%i %u'
+	LICENSE=''
+	LOCATION=''
+	ORGANIZATION=''
+	PERFORMER='%p'
+	TITLE='%t'
+	TRACKNUMBER='%02n'
+	TRACKTOTAL='%02N'
+	VERSION=''
 
 	(for field in $fields; do
 		 case "$field" in
