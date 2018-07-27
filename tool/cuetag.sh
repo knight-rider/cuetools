@@ -61,7 +61,7 @@ vorbis()
 	# TRACKTOTAL is not in the Xiph recommendation, but is in common use
 
 	[ -n "$fields" ] ||
-	fields='ALBUM ALBUMARTIST ARTIST CONTACT COPYRIGHT DATE DESCRIPTION GENRE ISRC LICENSE LOCATION ORGANIZATION PERFORMER TITLE TRACKNUMBER TRACKTOTAL VERSION'
+	fields='ALBUM ALBUMARTIST ARTIST CONTACT COPYRIGHT DATE DESCRIPTION DISCNUMBER GENRE ISRC LICENSE LOCATION ORGANIZATION PERFORMER TITLE TRACKNUMBER TRACKTOTAL VERSION'
 
 	# fields' corresponding cueprint conversion characters
 	# separate alternates with a space
@@ -71,8 +71,9 @@ vorbis()
 	ARTIST='%c %p'
 	CONTACT=''
 	COPYRIGHT=''
-	DATE='%D'
+	DATE='%Y'
 	DESCRIPTION='%m'
+	DISCNUMBER='%D'
 	GENRE='%g'
 	ISRC='%i %u'
 	LICENSE=''
@@ -122,7 +123,7 @@ id3()
 	TITLE='%t'
 	ALBUM='%T'
 	ARTIST='%p'
-	YEAR='%D'
+	YEAR='%Y'
 	COMMENT='%c'
 	GENRE='%g'
 	TRACKNUMBER='%n'

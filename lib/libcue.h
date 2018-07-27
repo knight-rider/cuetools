@@ -88,6 +88,7 @@ enum Pti {
 
 enum RemType {
 	REM_DATE,	/* date of cd/track */
+	REM_DISCNUMBER,
 	REM_REPLAYGAIN_ALBUM_GAIN,
 	REM_REPLAYGAIN_ALBUM_PEAK,
 	REM_REPLAYGAIN_TRACK_GAIN,
@@ -126,11 +127,6 @@ char *cdtext_get(enum Pti pti, const struct Cdtext *cdtext);
 
 struct Rem *cd_get_rem(const struct Cd *cd);
 struct Rem *track_get_rem(const struct Track *track);
-
-/*
- * return pointer to value for rem comment
- * @param unsigned int: enum of rem comment
- */
-char* rem_get(unsigned int, struct Rem *);
+char *rem_get(enum RemType, struct Rem *);
 
 #endif

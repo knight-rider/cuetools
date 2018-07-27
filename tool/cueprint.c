@@ -25,13 +25,14 @@
 Disc Information\n\
 arranger:	%A\n\
 composer:	%C\n\
-date:		%D\n\
 genre:		%G\n\
 message:	%M\n\
 no. of tracks:	%N\n\
 performer:	%P\n\
 songwriter:	%S\n\
 title:		%T\n\
+disc no.:	%D\n\
+year/date:	%Y\n\
 UPC/EAN:	%U\n\
 "
 
@@ -117,7 +118,7 @@ void disc_field(char *conv, int length, struct Cd *cd, union Value *value)
 		*c = 's';
 		break;
 	case 'D':
-		value->sval = rem_get(REM_DATE, rem);
+		value->sval = rem_get(REM_DISCNUMBER, rem);
 		*c = 's';
 		break;
 	case 'G':
@@ -150,6 +151,10 @@ void disc_field(char *conv, int length, struct Cd *cd, union Value *value)
 		break;
 	case 'U':
 		value->sval = cdtext_get(PTI_UPC_ISRC, cdtext);
+		*c = 's';
+		break;
+	case 'Y':
+		value->sval = rem_get(REM_DATE, rem);
 		*c = 's';
 		break;
 	default:

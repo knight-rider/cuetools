@@ -24,16 +24,9 @@ void rem_free(struct Rem *);
 // return true if allocated rem struct is empty
 int rem_is_empty(struct Rem *);
 
-/**
- * set value of rem comment
- * @param unsigned int: enum of rem comment
- */
-void rem_set(unsigned int, char *, struct Rem *);
+void rem_set(enum RemType, char *, struct Rem *);
 
-/**
- * dump all rem comments in human readable form
- * @param bool: if track: true; else false
- */
+// dump all rem comments in human readable form
 void rem_dump(struct Rem *);
 
 #endif

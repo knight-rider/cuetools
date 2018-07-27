@@ -1,7 +1,7 @@
 /*
 	Copyright (c)	2004, 2005, 2006, 2007	Svend Sorensen
-					2009, 2010				Jochen Keil
-					2018					Budi Rachmanto
+			2009, 2010		Jochen Keil
+			2018			Budi Rachmanto
 
 	For license terms, see the file COPYING in this distribution.
 */
@@ -14,8 +14,8 @@
 #include "cdtext.h"
 #include "rem.h"
 
-#define MAXTRACK		99		// Red Book track limit (from 01 to 99)
-#define MAXINDEX		99		// Red Book index limit (from 00 to 98)
+#define MAXTRACK	99	// Red Book track limit (from 01 to 99)
+#define MAXINDEX	99	// Red Book index limit (from 00 to 98)
 #define PARSER_BUFFER	1024    // Parser buffer size
 
 enum Format {CUE, TOC, UNKNOWN};
@@ -36,8 +36,8 @@ struct Track *cd_add_track(struct Cd *cd);
 
 // Track functions
 void track_set_filename(struct Track *track, char *filename);	// filename of data file
-void track_set_start(struct Track *track, long start);			// starting position in data file
-void track_set_length(struct Track *track, long length);		// length of data file to use
+void track_set_start(struct Track *track, long start);		// starting position in data file
+void track_set_length(struct Track *track, long length);	// length of data file to use
 void track_set_mode(struct Track *track, enum TrackMode mode);
 void track_set_sub_mode(struct Track *track, enum TrackSubMode sub_mode);
 void track_set_flag(struct Track *track, enum TrackFlag flag);

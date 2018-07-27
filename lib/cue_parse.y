@@ -115,7 +115,8 @@ void yy_delete_buffer(YY_BUFFER_STATE);
 /* REM */
 %type <ival> rem_item
 %token <ival> DATE
-%token <ival> REM_GENRE /* parsed in REM but stored in CD-TEXT */
+%token <ival> DISCNUMBER
+%token <ival> GENRE0	// parsed in REM but stored in CD-TEXT
 %token <ival> REPLAYGAIN_ALBUM_GAIN
 %token <ival> REPLAYGAIN_ALBUM_PEAK
 %token <ival> REPLAYGAIN_TRACK_GAIN
@@ -295,11 +296,12 @@ time
 
 rem
 	: rem_item STRING '\n' { rem_set($1, $2, rem); }
-	| REM_GENRE STRING '\n' { cdtext_set($1, $2, cdtext); }
+	| GENRE0 STRING '\n' { cdtext_set($1, $2, cdtext); }
 	;
 
 rem_item
 	: DATE
+	| DISCNUMBER
 	| REPLAYGAIN_ALBUM_GAIN
 	| REPLAYGAIN_ALBUM_PEAK
 	| REPLAYGAIN_TRACK_GAIN

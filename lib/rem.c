@@ -14,6 +14,7 @@ struct Rem *rem_new(void)
 {
 	struct Rem rem[] = {
 		{REM_DATE,			NULL},
+		{REM_DISCNUMBER,		NULL},
 		{REM_REPLAYGAIN_ALBUM_GAIN,	NULL},
 		{REM_REPLAYGAIN_ALBUM_PEAK,	NULL},
 		{REM_REPLAYGAIN_TRACK_GAIN,	NULL},
