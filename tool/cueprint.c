@@ -205,6 +205,8 @@ void track_field(char *conv, int length, struct Cd *cd, int trackno, union Value
 		break;
 	case 'p':
 		value->sval = cdtext_get(PTI_PERFORMER, cdtext);
+		if (!value->sval)
+			value->sval = cdtext_get(PTI_PERFORMER, cd_get_cdtext(cd));
 		*c = 's';
 		break;
 	case 's':
