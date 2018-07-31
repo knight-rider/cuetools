@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "cd.h"
+#include "cdtext.h"
 #include "time.h"
 
 const char *filename = "";	// last track datafile
@@ -21,8 +22,8 @@ void cue_print_cdtext (struct Cdtext *cdtext, FILE *fp, int istrack)
 	int pti;
 	const char *value = NULL;
 
-	for (pti = 0; PTI_END != pti; pti++)
-		if (value = cdtext_get(pti, cdtext)) {
+	for (pti = 0; PTI_SIZE != pti; pti++)
+		if (value = cdtext_get(cdtext, pti)) {
 			fprintf(fp, "%s", cdtext_get_key(pti, istrack));
 			fprintf(fp, " \"%s\"\n", value);
 		}

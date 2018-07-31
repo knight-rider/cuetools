@@ -11,7 +11,7 @@
 #include <stdlib.h>	// exit()
 #include <string.h>	// strcasecmp()
 
-#include "cd.h"
+#include "libcue.h"
 
 #if HAVE_CONFIG_H
 #	include "config.h"
@@ -98,10 +98,9 @@ void version()
 void disc_field(char *conv, int length, struct Cd *cd, union Value *value)
 {
 	struct Cdtext	*cdtext	= cd_get_cdtext(cd);
-	struct Rem	*rem	= cd_get_rem(cd);
 	char		*c	= conv + length - 1;	// pointer to conversion character
 
-//printf("DEBUG %s:%s cdtext:%p\n", __FILE__, __FUNCTION__, cdtext);
+//printf("DEBUG %s:%s cdtext:%p\n", __FILE__, __FUNCTION__);
 	/*
 	 * After setting value, set *c to specify value type:
 	 * 'd' integer
@@ -110,23 +109,23 @@ void disc_field(char *conv, int length, struct Cd *cd, union Value *value)
 	 */
 	switch (*c) {
 	case 'A':
-		value->sval = cdtext_get(PTI_ARRANGER, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_ARRANGER);
 		*c = 's';
 		break;
 	case 'C':
-		value->sval = cdtext_get(PTI_COMPOSER, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_COMPOSER);
 		*c = 's';
 		break;
 	case 'D':
-		value->sval = rem_get(REM_DISCNUMBER, rem);
+		value->sval = rem_get(cdtext, REM_DISCNUMBER);
 		*c = 's';
 		break;
 	case 'G':
-		value->sval = cdtext_get(PTI_GENRE, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_GENRE);
 		*c = 's';
 		break;
 	case 'M':
-		value->sval = cdtext_get(PTI_MESSAGE, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_MESSAGE);
 		*c = 's';
 		break;
 	case 'N':
@@ -134,27 +133,27 @@ void disc_field(char *conv, int length, struct Cd *cd, union Value *value)
 		*c = 'd';
 		break;
 	case 'P':
-		value->sval = cdtext_get(PTI_PERFORMER, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_PERFORMER);
 		*c = 's';
 		break;
 	case 'R':
-		value->sval = cdtext_get(PTI_ARRANGER, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_ARRANGER);
 		*c = 's';
 		break;
 	case 'S':
-		value->sval = cdtext_get(PTI_SONGWRITER, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_SONGWRITER);
 		*c = 's';
 		break;
 	case 'T':
-		value->sval = cdtext_get(PTI_TITLE, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_TITLE);
 		*c = 's';
 		break;
 	case 'U':
-		value->sval = cdtext_get(PTI_UPC_ISRC, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_UPC_ISRC);
 		*c = 's';
 		break;
 	case 'Y':
-		value->sval = rem_get(REM_DATE, rem);
+		value->sval = rem_get(cdtext, REM_DATE);
 		*c = 's';
 		break;
 	default:
@@ -171,14 +170,14 @@ void track_field(char *conv, int length, struct Cd *cd, int trackno, union Value
 	struct Track	*track	= cd_get_track(cd, trackno);
 	struct Cdtext	*cdtext	= track_get_cdtext(track);
 
-//printf("DEBUG %s:%s cdtext:%p\n", __FILE__, __FUNCTION__, cdtext);
+//printf("DEBUG %s:%s cdtext:%p\n", __FILE__, __FUNCTION__);
 	switch (*c) {
 	case 'a':
-		value->sval = cdtext_get(PTI_ARRANGER, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_ARRANGER);
 		*c = 's';
 		break;
 	case 'c':
-		value->sval = cdtext_get(PTI_COMPOSER, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_COMPOSER);
 		*c = 's';
 		break;
 	case 'f':
@@ -186,9 +185,9 @@ void track_field(char *conv, int length, struct Cd *cd, int trackno, union Value
 		*c = 's';
 		break;
 	case 'g':
-		value->sval = cdtext_get(PTI_GENRE, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_GENRE);
 		if (!value->sval)
-			value->sval = cdtext_get(PTI_GENRE, cd_get_cdtext(cd));
+			value->sval = cdtext_get(cd_get_cdtext(cd), PTI_GENRE);
 		*c = 's';
 		break;
 	case 'i':
@@ -196,7 +195,7 @@ void track_field(char *conv, int length, struct Cd *cd, int trackno, union Value
 		*c = 's';
 		break;
 	case 'm':
-		value->sval = cdtext_get(PTI_MESSAGE, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_MESSAGE);
 		*c = 's';
 		break;
 	case 'n':
@@ -204,21 +203,21 @@ void track_field(char *conv, int length, struct Cd *cd, int trackno, union Value
 		*c = 'd';
 		break;
 	case 'p':
-		value->sval = cdtext_get(PTI_PERFORMER, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_PERFORMER);
 		if (!value->sval)
-			value->sval = cdtext_get(PTI_PERFORMER, cd_get_cdtext(cd));
+			value->sval = cdtext_get(cd_get_cdtext(cd), PTI_PERFORMER);
 		*c = 's';
 		break;
 	case 's':
-		value->sval = cdtext_get(PTI_SONGWRITER, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_SONGWRITER);
 		*c = 's';
 		break;
 	case 't':
-		value->sval = cdtext_get(PTI_TITLE, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_TITLE);
 		*c = 's';
 		break;
 	case 'u':
-		value->sval = cdtext_get(PTI_UPC_ISRC, cdtext);
+		value->sval = cdtext_get(cdtext, PTI_UPC_ISRC);
 		*c = 's';
 		break;
 	default:
@@ -445,7 +444,6 @@ int main(int argc, char *argv[])
 	}
 
 	/* If no disc or track template is set, use the defaults for both. */
-	/* TODO: alternative to strdup to get variable strings? */
 	if (!d_template && !t_template) {
 		d_template = strdup(D_TEMPLATE);
 		t_template = strdup(T_TEMPLATE);

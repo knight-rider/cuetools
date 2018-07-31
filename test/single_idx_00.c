@@ -28,90 +28,87 @@ static char cue[] =
 static char* cue_test()
 {
    struct Cd *cd = cue_parse_string (cue);
-   mu_assert ("error parsing CUE", cd != NULL);
-
-   struct Rem *rem = cd_get_rem (cd);
-   mu_assert ("error getting REM", rem != NULL);
+   mu_assert("error parsing CUE", cd != NULL);
 
    struct Cdtext *cdtext = cd_get_cdtext (cd);
-   mu_assert ("error getting CDTEXT", cdtext != NULL);
+   mu_assert("error getting CDTEXT", cdtext != NULL);
 
    const char *val;
-   val = cdtext_get (PTI_PERFORMER, cdtext);
-   mu_assert ("error getting CD performer", val != NULL);
-   mu_assert ("error validating CD performer", strcmp (val, "Bloc Party") == 0);
+   val = cdtext_get(cdtext, PTI_PERFORMER);
+   mu_assert("error getting CD performer", val != NULL);
+   mu_assert("error validating CD performer", strcmp (val, "Bloc Party") == 0);
 
-   val = cdtext_get (PTI_TITLE, cdtext);
-   mu_assert ("error getting CD title", val != NULL);
-   mu_assert ("error validating CD title", strcmp (val, "Silent Alarm") == 0);
+   val = cdtext_get(cdtext, PTI_TITLE);
+   mu_assert("error getting CD title", val != NULL);
+   mu_assert("error validating CD title", strcmp (val, "Silent Alarm") == 0);
 
    int ival = cd_get_ntrack (cd);
-   mu_assert ("invalid number of tracks", ival == 2);
+   mu_assert("invalid number of tracks", ival == 2);
 
    struct Track *track;
    /* Track 1 */
    track = cd_get_track (cd, 1);
-   mu_assert ("error getting track", track != NULL);
+   mu_assert("error getting track", track != NULL);
 
    val = track_get_filename (track);
-   mu_assert ("error getting track filename", val != NULL);
-   mu_assert ("error validating track filename", strcmp (val, "Bloc Party - Silent Alarm.flac") == 0);
+   mu_assert("error getting track filename", val != NULL);
+   mu_assert("error validating track filename", strcmp (val, "Bloc Party - Silent Alarm.flac") == 0);
 
    cdtext = track_get_cdtext (track);
-   mu_assert ("error getting track CDTEXT", cdtext != NULL);
+   mu_assert("error getting track CDTEXT", cdtext != NULL);
 
-   val = cdtext_get (PTI_PERFORMER, cdtext);
-   mu_assert ("error getting track performer", val != NULL);
-   mu_assert ("error validating track performer", strcmp (val, "Bloc Party") == 0);
+   val = cdtext_get(cdtext, PTI_PERFORMER);
+   mu_assert("error getting track performer", val != NULL);
+   mu_assert("error validating track performer", strcmp (val, "Bloc Party") == 0);
 
-   val = cdtext_get (PTI_TITLE, cdtext);
-   mu_assert ("error getting track title", val != NULL);
-   mu_assert ("error validating track title", strcmp (val, "Like Eating Glass") == 0);
+   val = cdtext_get(cdtext, PTI_TITLE);
+   mu_assert("error getting track title", val != NULL);
+   mu_assert("error validating track title", strcmp (val, "Like Eating Glass") == 0);
 
    ival = track_get_zero_pre (track);
-   mu_assert ("invalid track pre-gap", ival == MSF_TO_F(3,22,70));
+   mu_assert("invalid track pre-gap", ival == MSF_TO_F(3,22,70));
    ival = track_get_start (track);
-   mu_assert ("invalid track start", ival == MSF_TO_F(3,22,70));
+   mu_assert("invalid track start", ival == MSF_TO_F(3,22,70));
    ival = track_get_length (track);
-   mu_assert ("invalid track length", ival == MSF_TO_F(4,19,74));
+   mu_assert("invalid track length", ival == MSF_TO_F(4,19,74));
 
    ival = track_get_index (track, 0);
-   mu_assert ("invalid index", ival == 0);
+   mu_assert("invalid index", ival == 0);
    ival = track_get_index (track, 1);
-   mu_assert ("invalid index", ival == MSF_TO_F(3,22,70));
+   mu_assert("invalid index", ival == MSF_TO_F(3,22,70));
 
    /* Track 2 */
    track = cd_get_track (cd, 2);
-   mu_assert ("error getting track", track != NULL);
+   mu_assert("error getting track", track != NULL);
 
    val = track_get_filename (track);
-   mu_assert ("error getting track filename", val != NULL);
-   mu_assert ("error validating track filename", strcmp (val, "Bloc Party - Silent Alarm.flac") == 0);
+   mu_assert("error getting track filename", val != NULL);
+   mu_assert("error validating track filename", strcmp (val, "Bloc Party - Silent Alarm.flac") == 0);
 
    cdtext = track_get_cdtext (track);
-   mu_assert ("error getting track CDTEXT", cdtext != NULL);
+   mu_assert("error getting track CDTEXT", cdtext != NULL);
 
-   val = cdtext_get (PTI_PERFORMER, cdtext);
-   mu_assert ("error getting track performer", val != NULL);
-   mu_assert ("error validating track performer", strcmp (val, "Bloc Party") == 0);
+   val = cdtext_get(cdtext, PTI_PERFORMER);
+   mu_assert("error getting track performer", val != NULL);
+   mu_assert("error validating track performer", strcmp (val, "Bloc Party") == 0);
 
-   val = cdtext_get (PTI_TITLE, cdtext);
-   mu_assert ("error getting track title", val != NULL);
-   mu_assert ("error validating track title", strcmp (val, "Helicopter") == 0);
+   val = cdtext_get(cdtext, PTI_TITLE);
+   mu_assert("error getting track title", val != NULL);
+   mu_assert("error validating track title", strcmp (val, "Helicopter") == 0);
 
    ival = track_get_zero_pre (track);
-   mu_assert ("invalid track pre-gap", ival == MSF_TO_F(0,2,0));
+   mu_assert("invalid track pre-gap", ival == MSF_TO_F(0,2,0));
    ival = track_get_start (track);
-   mu_assert ("invalid track start", ival == MSF_TO_F(7,44,69));
+   mu_assert("invalid track start", ival == MSF_TO_F(7,44,69));
    ival = track_get_length (track);
-   mu_assert ("invalid track length", ival == -1);
+   mu_assert("invalid track length", ival == -1);
 
    ival = track_get_index (track, 0);
-   mu_assert ("invalid index", ival == MSF_TO_F(7,42,69));
+   mu_assert("invalid index", ival == MSF_TO_F(7,42,69));
    ival = track_get_index (track, 1);
-   mu_assert ("invalid index", ival == MSF_TO_F(7,44,69));
+   mu_assert("invalid index", ival == MSF_TO_F(7,44,69));
 
-   cd_delete (cd);
+   cd_free(cd);
 
    return NULL;
 }

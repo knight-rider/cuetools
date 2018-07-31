@@ -15,7 +15,7 @@ static char* cue_test()
    assert(cd);
    int ntrack = cd_get_ntrack(cd);
    assert (ntrack == 99);
-   cd_delete(cd);
+   cd_free(cd);
 
    return NULL;
 }

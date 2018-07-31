@@ -10,6 +10,7 @@
 
 long time_msf_to_frame(int m, int s, int f);
 void time_frame_to_msf(long frame, int *m, int *s, int *f);
+void time_frame_to_ms(long frame, int *m, double *s);
 char *time_frame_to_mmssff(long f);
 
 #endif

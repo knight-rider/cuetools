@@ -31,29 +31,26 @@ static char* cue_test()
    struct Cd *cd = cue_parse_string(cue);
    mu_assert ("error parsing CUE", cd != NULL);
 
-   struct Rem *rem = cd_get_rem(cd);
-   mu_assert ("error getting REM", rem != NULL);
-
    struct Cdtext *cdtext = cd_get_cdtext(cd);
    mu_assert ("error getting CDTEXT", cdtext != NULL);
 
    const char *val;
-   val = cdtext_get(PTI_PERFORMER, cdtext);
+   val = cdtext_get(cdtext, PTI_PERFORMER);
    mu_assert("error getting CD performer", val != NULL);
 	printf("performer: %s\n", val);
    mu_assert("error validating CD performer", strcmp (val, "My Bloody Valentine") == 0);
 
-   val = cdtext_get(PTI_TITLE, cdtext);
+   val = cdtext_get(cdtext, PTI_TITLE);
    mu_assert("error getting CD title", val != NULL);
 	printf("title: %s\n", val);
    mu_assert("error validating CD title", strcmp (val, "Loveless") == 0);
 
-   val = cdtext_get(PTI_GENRE, cdtext);
+   val = cdtext_get(cdtext, PTI_GENRE);
    mu_assert("error getting CD genre", val != NULL);
 	printf("genre: %s\n", val);
    mu_assert("error validating CD genre", strcmp (val, "Alternative") == 0);
 
-   val = rem_get(REM_DATE, rem);
+   val = rem_get(cdtext, REM_DATE);
    mu_assert("error getting CD date", val != NULL);
 	printf("date: %s\n", val);
    mu_assert("error validating CD date", strcmp (val, "1991") == 0);
@@ -75,12 +72,12 @@ static char* cue_test()
    cdtext = track_get_cdtext(track);
    mu_assert("error getting track CDTEXT", cdtext != NULL);
 
-   val = cdtext_get(PTI_PERFORMER, cdtext);
+   val = cdtext_get(cdtext, PTI_PERFORMER);
    mu_assert("error getting track performer", val != NULL);
 	printf("track performer: %s\n", val);
    mu_assert("error validating track performer", strcmp (val, "My Bloody Valentine") == 0);
 
-   val = cdtext_get(PTI_TITLE, cdtext);
+   val = cdtext_get(cdtext, PTI_TITLE);
    mu_assert("error getting track title", val != NULL);
 	printf("track title: %s\n", val);
    mu_assert("error validating track title", strcmp (val, "Only Shallow") == 0);
@@ -107,11 +104,11 @@ static char* cue_test()
    cdtext = track_get_cdtext(track);
    mu_assert("error getting track CDTEXT", cdtext != NULL);
 
-   val = cdtext_get(PTI_PERFORMER, cdtext);
+   val = cdtext_get(cdtext, PTI_PERFORMER);
    mu_assert("error getting track performer", val != NULL);
    mu_assert("error validating track performer", strcmp (val, "My Bloody Valentine") == 0);
 
-   val = cdtext_get(PTI_TITLE, cdtext);
+   val = cdtext_get(cdtext, PTI_TITLE);
    mu_assert("error getting track title", val != NULL);
    mu_assert("error validating track title", strcmp (val, "Loomer") == 0);
 
@@ -123,7 +120,7 @@ static char* cue_test()
    ival = track_get_index(track, 1);
    mu_assert("invalid index", ival == MSF_TO_F(4,17,52));
 
-   cd_delete(cd);
+   cd_free(cd);
 
    return NULL;
 }

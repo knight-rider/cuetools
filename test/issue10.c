@@ -13,7 +13,7 @@ static char* cue_test()
    assert(cue);
    struct Cd *cd = cue_parse_file(cue);
    assert(cd);
-   cd_delete(cd);
+   cd_free(cd);
 
    return NULL;
 }

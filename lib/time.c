@@ -23,6 +23,12 @@ void time_frame_to_msf(long frame, int *m, int *s, int *f)
 	*m = frame;               /* 0 <= minutes */
 }
 
+void time_frame_to_ms(long frame, int *m, double *s)
+{
+	*m = frame / (75 * 60);
+	*s = (frame - (*m * 75 * 60)) / 75.;
+}
+
 /* print frame in mm:ss:ff format */
 char *time_frame_to_mmssff(long f)
 {

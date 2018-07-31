@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "cd.h"
+#include "cdtext.h"
 #include "cue_parse_prefix.h"
 #include "cue_parse.h"
 

@@ -8,7 +8,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+
 #include "cd.h"
+#include "cdtext.h"
 #include "toc_parse_prefix.h"
 #include "toc_parse.h"
 

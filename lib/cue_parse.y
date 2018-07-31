@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "cd.h"
+#include "cdtext.h"
 #include "time.h"
 #include "cue_parse_prefix.h"
 
@@ -25,14 +26,13 @@ char fnamebuf[PARSER_BUFFER];
 extern int yylineno;
 extern FILE* yyin;
 
-static struct Cd *cd = NULL;
-static struct Track *track = NULL;
-static struct Track *prev_track = NULL;
-static struct Cdtext *cdtext = NULL;
-static struct Rem *rem = NULL;
-static char *prev_filename = NULL;	/* last file in or before last track */
-static char *cur_filename = NULL;	/* last file in the last track */
-static char *new_filename = NULL;	/* last file in this track */
+static struct Cd	*cd	= NULL;
+static struct Track	*track	= NULL;
+static struct Track	*prev_track = NULL;
+static struct Cdtext	*cdtext	= NULL;
+static char *prev_filename	= NULL;	// last file in or before last track
+static char *cur_filename	= NULL;	// last file in the last track
+static char *new_filename	= NULL;	// last file in this track
 
 /* lexer interface */
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
@@ -129,9 +129,8 @@ cuefile
 
 new_cd
 	: /* empty */ {
-		cd = cd_init();
-		cdtext = cd_get_cdtext(cd);
-		rem = cd_get_rem(cd);
+		cd	= cd_init();
+		cdtext	= cd_get_cdtext(cd);
 	}
 	;
 
@@ -187,7 +186,6 @@ new_track
 
 		track = cd_add_track(cd);
 		cdtext = track_get_cdtext(track);
-		rem = track_get_rem(track);
 
 		cur_filename = new_filename;
 		if (cur_filename)
@@ -234,7 +232,7 @@ track_statement
 		long prev_length;
 
 		/* Set previous track length if it has not been set */
-		if (prev_track && !cur_filename && track_get_length (prev_track) == -1) {
+		if (prev_track && !cur_filename && track_get_length(prev_track) == -1) {
 			/* track shares file with previous track */
 			prev_length = $3 - track_get_start(prev_track);
 			track_set_length(prev_track, prev_length);
@@ -244,10 +242,10 @@ track_statement
 			/* INDEX 01 */
 			track_set_start(track, $3);
 
-			long idx00 = track_get_index (track, 0);
+			long idx00 = track_get_index(track, 0);
 
 			if (idx00 != -1 && $3)
-				track_set_zero_pre (track, $3 - idx00);
+				track_set_zero_pre(track, $3 - idx00);
 		}
 
 		track_set_index (track, $2, $3);
@@ -270,7 +268,7 @@ track_flag
 	;
 
 cdtext
-	: cdtext_item STRING '\n' { cdtext_set ($1, $2, cdtext); }
+	: cdtext_item STRING '\n' { cdtext_set(cdtext, $1, $2); }
 	;
 
 cdtext_item
@@ -295,8 +293,8 @@ time
 	;
 
 rem
-	: rem_item STRING '\n' { rem_set($1, $2, rem); }
-	| GENRE0 STRING '\n' { cdtext_set($1, $2, cdtext); }
+	: rem_item STRING '\n' { rem_set(cdtext, $1, $2); }
+	| GENRE0 STRING '\n' { cdtext_set(cdtext, $1, $2); }
 	;
 
 rem_item
@@ -311,21 +309,20 @@ rem_item
 
 /* lexer interface */
 
-void yyerror (const char *s)
+void yyerror(const char *s)
 {
 	fprintf(stderr, "%d: %s\n", yylineno, s);
 }
 
 static void reset_static_vars()
 {
-	cd = NULL;
-	track = NULL;
-	prev_track = NULL;
-	cdtext = NULL;
-	rem = NULL;
-	prev_filename = NULL;
-	cur_filename = NULL;
-	new_filename = NULL;
+	cd		= NULL;
+	track		= NULL;
+	prev_track	= NULL;
+	cdtext		= NULL;
+	prev_filename	= NULL;
+	cur_filename	= NULL;
+	new_filename	= NULL;
 }
 
 struct Cd *cue_parse_file(FILE *fp)

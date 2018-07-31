@@ -7,7 +7,9 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include "cd.h"
+#include "cdtext.h"
 #include "time.h"
 
 void toc_print_cdtext (struct Cdtext *cdtext, FILE *fp, int istrack)
@@ -15,8 +17,8 @@ void toc_print_cdtext (struct Cdtext *cdtext, FILE *fp, int istrack)
 	int pti;
 	const char *value = NULL;
 
-	for (pti = 0; PTI_END != pti; pti++)
-		if (value = cdtext_get(pti, cdtext)) {
+	for (pti = 0; PTI_SIZE != pti; pti++)
+		if (value = cdtext_get(cdtext, pti)) {
 			fprintf(fp, "\t\t");
 			fprintf(fp, "%s", cdtext_get_key(pti, istrack));
 			fprintf(fp, " \"%s\"\n", value);
@@ -64,7 +66,7 @@ void toc_print_track (FILE *fp, struct Track *track)
 	if (track_get_isrc(track))
 		fprintf(fp, "ISRC \"%s\"\n", track_get_isrc(track));
 
-	if (cdtext_is_empty(cdtext)) {
+	if (!cdtext_is_empty(cdtext)) {
 		fprintf(fp, "CD_TEXT {\n");
 		fprintf(fp, "\tLANGUAGE 0 {\n");
 		toc_print_cdtext(cdtext, fp, 1);
@@ -128,7 +130,7 @@ void toc_print (FILE *fp, struct Cd *cd)
 	if (cd_get_catalog(cd))
 		fprintf(fp, "CATALOG \"%s\"\n", cd_get_catalog(cd));
 
-	if(cdtext_is_empty(cdtext)) {
+	if(!cdtext_is_empty(cdtext)) {
 		fprintf(fp, "CD_TEXT {\n");
 		fprintf(fp, "\tLANGUAGE_MAP { 0:9 }\n");
 		fprintf(fp, "\tLANGUAGE 0 {\n");

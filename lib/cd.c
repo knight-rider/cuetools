@@ -1,7 +1,7 @@
 /*
 	Copyright (c)	2004, 2005, 2006, 2007	Svend Sorensen
-					2009, 2010				Jochen Keil
-					2018					Budi Rachmanto
+			2009, 2010		Jochen Keil
+			2018			Budi Rachmanto
 
 	For license terms, see the file COPYING in this distribution.
 */
@@ -9,11 +9,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "cdtext.h"
 #include "cd.h"
 #include "toc.h"
 
+enum DataType {
+	DATA_AUDIO,
+	DATA_DATA,
+	DATA_FIFO,
+	DATA_ZERO
+};
+
 struct Data {
-	int		type;
+	enum DataType	type;
 	char	*name;
 	long	start,
 		length;
@@ -28,33 +37,24 @@ struct Track {
 			flags;		// flags
 	char		*isrc;		// IRSC Code (5.22.4) 12 bytes
 	struct Cdtext	*cdtext;
-	struct Rem*	rem;
 	long		index[MAXINDEX];	// indexes (in frames, 5.29.2.5) relative to start of file
 };
 
 struct Cd {
-	int		mode;		// disc mode
+	enum DiscMode	mode;		// disc mode
 	char		*catalog,	// Media Catalog Number (5.22.3)
 			*cdtextfile;	// Filename of CDText File
 	struct Cdtext	*cdtext;
-	struct Rem*	rem;
-	int		ntrack;		// number of tracks in album
 	struct Track	*track[MAXTRACK];
 };
 
 struct Cd *cd_init(void)
 {
-	struct Cd *cd = malloc(sizeof(*cd));
+	struct Cd *cd = calloc(1, sizeof(*cd));
 
-	if (!cd)
-		fprintf(stderr, "unable to create cd\n");
-	else {
-		cd->mode = MODE_CD_DA;
-		cd->catalog = NULL;
-		cd->cdtextfile = NULL;
-		cd->cdtext = cdtext_init();
-		cd->rem = rem_new();
-		cd->ntrack = 0;
+	if (cd && !(cd->cdtext = cdtext_init())) {
+		free(cd);
+		return NULL;
 	}
 	return cd;
 }
@@ -64,12 +64,11 @@ struct Cdtext *track_get_cdtext(const struct Track *track)
 	return track ? track->cdtext : NULL;
 }
 
-void track_delete(struct Track *track)
+void track_free(struct Track *track)
 {
 	if (!track)
 		return;
-	cdtext_delete(track_get_cdtext(track));
-	rem_free(track_get_rem(track));
+	cdtext_free(track_get_cdtext(track));
 	free(track->isrc);
 	free(track->zero_pre.name);
 	free(track->zero_post.name);
@@ -77,23 +76,29 @@ void track_delete(struct Track *track)
 	free(track);
 }
 
-struct Rem* cd_get_rem(const struct Cd *cd)
+int cd_get_ntrack(const struct Cd *cd)
 {
-	return cd ? cd->rem : NULL;
+	int i = -1;
+
+	if (cd)
+		do
+			i++;
+		while (i < MAXTRACK && cd->track[i]);
+	return i;
 }
 
-void cd_delete(struct Cd* cd)
+void cd_free(struct Cd* cd)
 {
-	int i;
+	int	i,
+		n = cd_get_ntrack(cd);
 
 	if (!cd)
 		return;
 	free(cd->catalog);
 	free(cd->cdtextfile);
-	for (i = 0; i < cd->ntrack; i++)
-		track_delete(cd->track[i]);
-	cdtext_delete(cd_get_cdtext(cd));
-	rem_free(cd_get_rem(cd));
+	for (i = 0; i < n; i++)
+		track_free(cd->track[i]);
+	cdtext_free(cd_get_cdtext(cd));
 	free(cd);
 }
 
@@ -104,36 +109,37 @@ struct Track *track_init(void)
 	if (!track)
 		fprintf(stderr, "unable to create track\n");
 	else {
-		track->zero_pre.type = DATA_ZERO;
-		track->zero_pre.name = NULL;
-		track->zero_pre.start = -1;
-		track->zero_pre.length = -1;
+		track->zero_pre.type	= DATA_ZERO;
+		track->zero_pre.name	= NULL;
+		track->zero_pre.start	= -1;
+		track->zero_pre.length	= -1;
 
-		track->file.type = DATA_AUDIO;
-		track->file.name = NULL;
-		track->file.start = -1;
-		track->file.length = -1;
+		track->file.type	= DATA_AUDIO;
+		track->file.name	= NULL;
+		track->file.start	= -1;
+		track->file.length	= -1;
 
-		track->zero_post.type = DATA_ZERO;
-		track->zero_post.name = NULL;
-		track->zero_post.start = -1;
-		track->zero_post.length = -1;
+		track->zero_post.type	= DATA_ZERO;
+		track->zero_post.name	= NULL;
+		track->zero_post.start	= -1;
+		track->zero_post.length	= -1;
 
-		track->mode = MODE_AUDIO;
-		track->sub_mode = SUB_MODE_RW;
-		track->flags = FLAG_NONE;
-		track->isrc = NULL;
-		track->cdtext = cdtext_init();
-		track->rem = rem_new();
+		track->mode	= MODE_AUDIO;
+		track->sub_mode	= SUB_MODE_RW;
+		track->flags	= FLAG_NONE;
+		track->isrc	= NULL;
+		if (!(track->cdtext = cdtext_init())) {
+			free(track);
+			return NULL;
+		}
 
 		int i;
-		for (i=0; i<MAXINDEX; i++)
+		for (i = 0; i < MAXINDEX; i++)
 			track->index[i] = -1;
 	}
 	return track;
 }
 
-// cd structure functions
 void cd_set_mode(struct Cd *cd, int mode)
 {
 	cd->mode = mode;
@@ -175,31 +181,26 @@ struct Cdtext *cd_get_cdtext(const struct Cd *cd)
 
 struct Track *cd_add_track(struct Cd *cd)
 {
-	if (cd->ntrack < MAXTRACK)
-		cd->ntrack++;
-	else
+	int	n = cd_get_ntrack(cd);
+
+	if (!cd)
+		return NULL;
+	if (n >= MAXTRACK) {
 		fprintf(stderr, "too many tracks\n");
-
-	// this will reinit last track if there were too many
-	cd->track[cd->ntrack - 1] = track_init();
-
-	return cd->track[cd->ntrack - 1];
-}
-
-int cd_get_ntrack(const struct Cd *cd)
-{
-	return cd->ntrack;
+		n--;
+	}
+	free(cd->track[n]);
+	cd->track[n] = track_init();	// reinit last track if there were too many
+	return cd->track[n];
 }
 
 struct Track *cd_get_track(const struct Cd *cd, int i)
 {
-	if ((0 < i) && (i <= cd->ntrack) && (cd != NULL))
+	if (cd && 0 < i && i <= cd_get_ntrack(cd))
 		return cd->track[i - 1];
-	else
-		return NULL;
+	return NULL;
 }
 
-// track structure functions
 void track_set_filename(struct Track *track, char *filename)
 {
 	if (track->file.name)
@@ -299,28 +300,29 @@ char *track_get_isrc(const struct Track *track)
 	return track->isrc;
 }
 
-struct Rem* track_get_rem(const struct Track *track)
+long track_get_index(const struct Track *track, int i)
 {
-	return track ? track->rem : NULL;
-}
-
-void track_set_index(struct Track *track, int i, long ind)
-{
-	if (i < MAXINDEX) {
-		track->index[i] = ind;
-		return;
-	}
-	fprintf(stderr, "too many indexes\n");
+	return (0 <= i) && (i < MAXINDEX) ? track->index[i] : -1;
 }
 
 int track_get_nindex(struct Track *track)
 {
-	int i, n = 0;
+	int	i,
+		n = 0;
 
 	for (i = 0; i < MAXINDEX; i++)
-		if (track->index[i] != -1)
-			n++;
+		if (track_get_index(track, i) != -1)
+			n = i + 1;
 	return n;
+}
+
+void track_set_index(struct Track *track, int i, long idx)
+{
+	if (i < MAXINDEX) {
+		track->index[i] = idx;
+		return;
+	}
+	fprintf(stderr, "too many indexes\n");
 }
 
 void track_add_index(struct Track *track, long idx)
@@ -328,25 +330,21 @@ void track_add_index(struct Track *track, long idx)
 	track_set_index(track, track_get_nindex(track), idx);
 }
 
-long track_get_index(const struct Track *track, int i)
-{
-	return (0 <= i) && (i < MAXINDEX) ? track->index[i] : -1;
-}
-
 // dump cd info
 static void cd_track_dump(struct Track *track)
 {
 	int i;
 
-	printf("zero_pre: %ld\n", track->zero_pre.length);
-	printf("filename: %s\n", track->file.name);
-	printf("start: %ld\n", track->file.start);
-	printf("length: %ld\n", track->file.length);
-	printf("zero_post: %ld\n", track->zero_post.length);
-	printf("mode: %d\n", track->mode);
-	printf("sub_mode: %d\n", track->sub_mode);
-	printf("flags: 0x%x\n", track->flags);
-	printf("isrc: %s\n", track->isrc);
+	printf("zero_pre: %ld\n",	track->zero_pre.length);
+	printf("filename: %s\n",	track->file.name);
+	printf("start: %ld\n",		track->file.start);
+	printf("length: %ld\n",		track->file.length);
+	printf("zero_post: %ld\n",	track->zero_post.length);
+	printf("mode: %d\n",		track->mode);
+	printf("sub_mode: %d\n",	track->sub_mode);
+	printf("flags: 0x%x\n",		track->flags);
+	printf("isrc: %s\n",		track->isrc);
+	printf("indexes: %d\n", track_get_nindex(track));
 
 	for (i = 0; i < MAXINDEX; ++i)
 		if (track->index[i] != -1)
@@ -356,33 +354,25 @@ static void cd_track_dump(struct Track *track)
 		printf("cdtext:\n");
 		cdtext_dump(track->cdtext, 1);
 	}
-
-	if (track->rem) {
-		printf("rem:\n");
-		rem_dump(track->rem);
-	}
 }
 
 void cd_dump(struct Cd *cd)
 {
-	int i;
+	int	i,
+		n = cd_get_ntrack(cd);
 
-	printf("Disc Info\n");
-	printf("mode: %d\n", cd->mode);
-	printf("catalog: %s\n", cd->catalog);
-	printf("cdtextfile: %s\n", cd->cdtextfile);
+	printf("\nDisc Info\n");
+	printf("mode: %d\n",		cd->mode);
+	printf("catalog: %s\n",		cd->catalog);
+	printf("cdtextfile: %s\n",	cd->cdtextfile);
+	printf("tracks: %d\n",		n);
 	if (cd->cdtext) {
 		printf("cdtext:\n");
 		cdtext_dump(cd->cdtext, 0);
 	}
 
-	if (cd->rem) {
-		printf("rem:\n");
-		rem_dump(cd->rem);
-	}
-
-	for (i = 0; i < cd->ntrack; ++i) {
-		printf("Track %d Info\n", i + 1);
+	for (i = 0; i < n; ++i) {
+		printf("\nTrack %d Info\n", i + 1);
 		cd_track_dump(cd->track[i]);
 	}
 }

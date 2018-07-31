@@ -1,7 +1,7 @@
 /*
 	Copyright (c)	2004, 2005, 2006, 2007	Svend Sorensen
-					2009, 2010				Jochen Keil
-					2018					Budi Rachmanto
+			2009, 2010		Jochen Keil
+			2018			Budi Rachmanto
 
 	For license terms, see the file COPYING in this distribution.
 */
@@ -9,86 +9,50 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "cdtext.h"
 
-struct Cdtext {
-	enum Pti		pti;
-	enum PtiFormat	format;
-	char			*value;
-};
+#include "cdtext.h"
 
 struct Cdtext *cdtext_init(void)
 {
-	struct Cdtext cdtext[] = {
-		{PTI_TITLE,			FORMAT_CHAR,	NULL},
-		{PTI_PERFORMER,		FORMAT_CHAR,	NULL},
-		{PTI_SONGWRITER,	FORMAT_CHAR,	NULL},
-		{PTI_COMPOSER,		FORMAT_CHAR,	NULL},
-		{PTI_ARRANGER,		FORMAT_CHAR,	NULL},
-		{PTI_MESSAGE,		FORMAT_CHAR,	NULL},
-		{PTI_DISC_ID,		FORMAT_BINARY,	NULL},
-		{PTI_GENRE,			FORMAT_BINARY,	NULL},
-		{PTI_TOC_INFO1,		FORMAT_BINARY,	NULL},
-		{PTI_TOC_INFO2,		FORMAT_BINARY,	NULL},
-		{PTI_RESERVED1,		FORMAT_CHAR,	NULL},
-		{PTI_RESERVED2,		FORMAT_CHAR,	NULL},
-		{PTI_RESERVED3,		FORMAT_CHAR,	NULL},
-		{PTI_RESERVED4,		FORMAT_CHAR,	NULL},
-		{PTI_UPC_ISRC,		FORMAT_CHAR,	NULL},
-		{PTI_SIZE_INFO,		FORMAT_BINARY,	NULL},
-		{PTI_END,			FORMAT_CHAR,	NULL}
-	};
-
-	struct Cdtext *new_cdtext =
-		(struct Cdtext *) calloc (sizeof (cdtext) / sizeof (*new_cdtext), sizeof (*new_cdtext));
-
-	if (!new_cdtext)
-		fprintf (stderr, "problem allocating memory\n");
-	else
-		memcpy (new_cdtext, cdtext, sizeof(cdtext));
-
-	return new_cdtext;
+	return calloc(1, sizeof(struct Cdtext));
 }
 
-void cdtext_delete(struct Cdtext *cdtext)
+void cdtext_free(struct Cdtext *cdtext)
 {
-	int i;
+	enum Pti i;
+	enum Rem j;
 
 	if (cdtext) {
-		for (i = 0; PTI_END != cdtext[i].pti; i++)
-			free (cdtext[i].value);
-		free (cdtext);
+		for (i = PTI_TITLE; i < PTI_SIZE; i++)
+			free(cdtext->pti[i]);
+		for (j = REM_DATE; j < REM_SIZE; j++)
+			free(cdtext->rem[j]);
+		free(cdtext);
 	}
 }
 
-// return 0 if there is no cdtext, returns non-zero otherwise
-int cdtext_is_empty(struct Cdtext *cdtext)
+bool cdtext_is_empty(struct Cdtext *cdtext)
 {
-	for (; PTI_END != cdtext->pti; cdtext++)
-		if (cdtext->value)
-			return -1;
+	enum Pti i;
 
-	return 0;
+	if (cdtext)
+		for (i = PTI_TITLE; i < PTI_SIZE; i++)
+			if (cdtext->pti[i])
+				return false;
+	return true;
 }
 
-// sets cdtext's pti entry to field
-void cdtext_set(int pti, char *value, struct Cdtext *cdtext)
+void cdtext_set(struct Cdtext *cdtext, enum Pti i, char *value)
 {
-	if (value)	// don't pass NULL to strdup
-		for (; PTI_END != cdtext->pti; cdtext++)
-			if (pti == cdtext->pti) {
-				free (cdtext->value);
-				cdtext->value = strdup (value);
-			}
+	if (value) {	// don't pass NULL to strdup
+		free(cdtext->pti[i]);
+		cdtext->pti[i] = strdup (value);
+	}
 }
 
-// returns value for pti, NULL if pti is not found
-char *cdtext_get(enum Pti pti, const struct Cdtext *cdtext)
+char *cdtext_get(const struct Cdtext *cdtext, enum Pti i)
 {
-	for (; PTI_END != cdtext->pti; cdtext++)
-		if (pti == cdtext->pti)
-			return cdtext->value;
-	return NULL;
+	return !cdtext ? NULL : cdtext->pti[i];
 }
 
 const char *cdtext_get_key(enum Pti pti, int istrack)
@@ -139,10 +103,10 @@ const char *cdtext_get_key(enum Pti pti, int istrack)
 		/* reserved */
 		break;
 	case PTI_UPC_ISRC:
-		if (0 == istrack)
-			key = "UPC_EAN";
-		else
+		if (istrack)
 			key = "ISRC";
+		else
+			key = "UPC_EAN";
 		break;
 	case PTI_SIZE_INFO:
 		key = "SIZE_INFO";
@@ -152,14 +116,29 @@ const char *cdtext_get_key(enum Pti pti, int istrack)
 	return key;
 }
 
-void cdtext_dump(struct Cdtext *cdtext, int istrack)
+void cdtext_dump(struct Cdtext *cdtext, bool istrack)
 {
-	int pti;
+	enum Pti i;
+	enum Rem j;
 	const char *value = NULL;
 
-	for (pti = 0; PTI_END != pti; pti++)
-		if (value = cdtext_get(pti, cdtext)) {
-			printf("%s: ", cdtext_get_key(pti, istrack));
-			printf("%s\n", value);
-		}
+	for (i = PTI_TITLE; i < PTI_SIZE; i++)
+		if (value = cdtext_get(cdtext, i))
+			printf("%s: %s\n", cdtext_get_key(i, istrack), value);
+	for (j = REM_DATE; j < REM_SIZE; j++)
+		if (value = cdtext->rem[j])
+			printf("REM %u: %s\n", j, value);
+}
+
+void rem_set(struct Cdtext *cdtext, enum Rem i, char *value)
+{
+	if (!cdtext || !value)
+		return;
+	free(cdtext->rem[i]);
+	cdtext->rem[i] = strdup(value);
+}
+
+char *rem_get(struct Cdtext *cdtext, enum Rem i)
+{
+	return !cdtext ? NULL : cdtext->rem[i];
 }

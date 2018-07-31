@@ -10,7 +10,7 @@
 #include <stdlib.h>	// exit()
 #include <string.h>	// strcasecmp()
 
-#include "cd.h"
+#include "libcue.h"
 
 #if HAVE_CONFIG_H
 #include "config.h"

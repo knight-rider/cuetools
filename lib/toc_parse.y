@@ -9,7 +9,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "cd.h"
+#include "cdtext.h"
 #include "time.h"
 #include "toc_parse_prefix.h"
 
@@ -284,7 +286,7 @@ cdtext_defs
 
 cdtext_def
 	: cdtext_item STRING '\n' {
-		cdtext_set ($1, $2, cdtext);
+		cdtext_set(cdtext, $1, $2);
 	}
 	| cdtext_item '{' bytes '}' '\n' {
 		yyerror("binary CD-TEXT data not supported\n");
