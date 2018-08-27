@@ -135,6 +135,9 @@ REM		{ BEGIN(REM); /* exclusive rules for special exceptions */ }
 [[:digit:]]+	{ yylval.ival = atoi(yytext); return NUMBER; }
 :		{ return yytext[0]; }
 
+^;.*\n		{ yylineno++; /* comment line */ }
+;.*\n		{ yylineno++; return '\n'; }
+
 ^{ws}*\n	{ yylineno++; /* blank line */ }
 \n		{ yylineno++; return '\n'; }
 .		{ fprintf(stderr, "bad character '%c'\n", yytext[0]); }
