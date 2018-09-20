@@ -203,19 +203,19 @@ main()
 		case $file in
 		*.[Ff][Ll][Aa][Cc])
 			vorbis $trackno "$file" $FIELDS
-			[ "$file" != "$LBL.flac" ] && `mv -v "$file" "$LBL.flac"`
+			[[ $file != $LBL.flac ]] && `mv "$file" "$LBL.flac"`
 			;;
 		*.[Oo][Gg][Gg])
 			vorbis $trackno "$file" $FIELDS
-			[ "$file" != "$LBL.ogg" ] && `mv -v "$file" "$LBL.ogg"`
+			[[ $file != $LBL.ogg ]] && `mv "$file" "$LBL.ogg"`
 			;;
 		*.[Mm][Pp]3)
 			id3 $trackno "$file" $FIELDS
-			[ "$file" != "$LBL.mp3" ] && `mv -v "$file" "$LBL.mp3"`
+			[[ $file != $LBL.mp3 ]] && `mv "$file" "$LBL.mp3"`
 			;;
 		*.[Tt][Xx][Tt])
 			vorbis $trackno "$file"
-			[ "$file" != "$LBL.txt" ] && `mv -v "$file" "$LBL.txt"`
+			[[ $file != $LBL.txt ]] && `mv "$file" "$LBL.txt"`
 			;;
 		*.*)
 			echo "$file: uknown file type"
