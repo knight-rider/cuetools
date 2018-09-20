@@ -198,7 +198,7 @@ main()
 	fi
 
 	for file in "$@"; do
-		LBL=`dirname "$file"`/`$CUEPRINT -n $trackno -t '%02n %p - %t' "$cue_file"`
+		LBL=`dirname "$file"`/`$CUEPRINT -n $trackno -t '%02n %p - %t' "$cue_file"|sed 's/\.$//'`
 
 		case $file in
 		*.[Ff][Ll][Aa][Cc])
