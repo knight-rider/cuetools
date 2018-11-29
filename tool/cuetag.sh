@@ -198,27 +198,27 @@ main()
 	fi
 
 	for file in "$@"; do
-		LBL=`echo $(dirname "$file")/$($CUEPRINT -n $trackno -t '%02n %p - %t' "$cue_file")|sed 's|^\./||'`
+		LBL=`echo $(dirname "$file")/$($CUEPRINT -n $trackno -t '%02n %p - %t' "$cue_file"|sed 's.[/|\].-.g')|sed 's|^\./||'`
 
 		case $file in
 		*.[Ff][Ll][Aa][Cc])
 			vorbis $trackno "$file" $FIELDS
-			[[ $file != $LBL.flac ]] && `mv "$file" "$LBL.flac"`
+			[[ $file != $LBL.flac ]] && mv -v "$file" "$LBL.flac"
 			;;
 		*.[Oo][Gg][Gg])
 			vorbis $trackno "$file" $FIELDS
-			[[ $file != $LBL.ogg ]] && `mv "$file" "$LBL.ogg"`
+			[[ $file != $LBL.ogg ]] && mv -v "$file" "$LBL.ogg"
 			;;
 		*.[Mm][Pp]3)
 			id3 $trackno "$file" $FIELDS
-			[[ $file != $LBL.mp3 ]] && `mv "$file" "$LBL.mp3"`
+			[[ $file != $LBL.mp3 ]] && mv -v "$file" "$LBL.mp3"
 			;;
 		*.[Tt][Xx][Tt])
 			vorbis $trackno "$file"
-			[[ $file != $LBL.txt ]] && `mv "$file" "$LBL.txt"`
+			[[ $file != $LBL.txt ]] && mv -v "$file" "$LBL.txt"
 			;;
 		*.*)
-			echo "$file: uknown file type"
+			echo "$file: unknown file type"
 			;;
 		esac
 		trackno=$(($trackno + 1))
