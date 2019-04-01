@@ -5,7 +5,7 @@
 # usage: cuetag.sh <cuefile|tocfile> [file]...
 
 CUEPRINT=`which cueprint`
-cue_file=""
+CUE_I=""
 
 # print usage instructions
 usage()
@@ -92,7 +92,7 @@ vorbis()
 		 (*)
 			 value=""
 			 for conv in $(eval echo \$$field); do
-				 value=$($CUEPRINT -n $trackno -t "$conv\n" "$cue_file")
+				 value=$($CUEPRINT -n $trackno -t "$conv\n" "$CUE_I")
 
 				 if [ -n "$value" ]; then
 					 echo "$field=$value"
@@ -135,7 +135,7 @@ id3()
 		*)
 			value=""
 			for conv in $(eval echo \$$field); do
-				value=$($CUEPRINT -n $1 -t "$conv\n" "$cue_file")
+				value=$($CUEPRINT -n $1 -t "$conv\n" "$CUE_I")
 
 				if [ -n "$value" ]; then
 					break
@@ -179,11 +179,11 @@ main()
 		exit
 	fi
 
-	cue_file=$1
+	CUE_I=$1
 	shift
 
-	ntrack=$($CUEPRINT -d '%N' "$cue_file")
-	trackno=1
+	ntrack=$($CUEPRINT -d '%N' "$CUE_I")
+	trackno=0
 
 	NUM_FILES=0 FIELDS=
 	for arg in "$@"; do
@@ -197,32 +197,46 @@ main()
 		echo "warning: number of files does not match number of tracks"
 	fi
 
+	CUE_O=`echo $(dirname "$1")/$($CUEPRINT -d '%P - %Y - %T.cue' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
+	mv  "$CUE_O" "$CUE_O.orig"
+	grep -ve FILE -ve "INDEX 00" "$CUE_I"|sed 's|INDEX 01.*|INDEX 01 00:00:00|' > "$CUE_O"
+
 	for file in "$@"; do
-		LBL=`echo $(dirname "$file")/$($CUEPRINT -n $trackno -t '%02n %p - %t' "$cue_file"|sed 's.[/|\].-.g')|sed 's|^\./||'`
+		IDX0=`cuebreakpoints -l "$CUE_I"|cat -n|grep "\s$trackno\s"|sed "s/.*\s/    INDEX 00 /;s/\./:/"`
+		trackno=$(($trackno + 1))
+		LBL=`echo $(dirname "$file")/$($CUEPRINT -n $trackno -t '%02n %p - %t' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
+		TYPE="WAVE"
 
 		case $file in
 		*.[Ff][Ll][Aa][Cc])
 			vorbis $trackno "$file" $FIELDS
-			[[ $file != $LBL.flac ]] && mv -v "$file" "$LBL.flac"
+			LBL="$LBL.flac"
 			;;
 		*.[Oo][Gg][Gg])
 			vorbis $trackno "$file" $FIELDS
-			[[ $file != $LBL.ogg ]] && mv -v "$file" "$LBL.ogg"
+			LBL="$LBL.ogg"
 			;;
 		*.[Mm][Pp]3)
 			id3 $trackno "$file" $FIELDS
-			[[ $file != $LBL.mp3 ]] && mv -v "$file" "$LBL.mp3"
+			LBL="$LBL.mp3"
+			TYPE="MP3"
 			;;
 		*.[Tt][Xx][Tt])
 			vorbis $trackno "$file"
-			[[ $file != $LBL.txt ]] && mv -v "$file" "$LBL.txt"
+			LBL="$LBL.txt"
 			;;
 		*.*)
 			echo "$file: unknown file type"
+			continue
 			;;
 		esac
-		trackno=$(($trackno + 1))
+		[[ $file != $LBL ]] && mv -v "$file" "$LBL"
+
+		TRK=`echo "FILE \"$LBL\" $TYPE\n"|sed 's|".*/|"|'`
+		cat "$CUE_O"|sed "s|^.*TRACK.*$trackno.*|$TRK&\n$IDX0|;s|\n$||" > cue.out
+		mv cue.out "$CUE_O"
 	done
+	echo "Created non-compliant per-track CUE sheet: $CUE_O"
 }
 
 main "$@"

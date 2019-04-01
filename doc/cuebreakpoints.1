@@ -11,6 +11,8 @@ cuebreakpoints \- report track breakpoints from a CUE or TOC file
 }{
 .B \-m|\-\-millisecond
 }{
+.B \-l|\-\-length
+|
 .B \-p|\-\-prepend\-gaps
 |
 .B \-s|\-\-split\-gaps
@@ -68,7 +70,10 @@ or
 .BR toc .
 .TP
 .B \-m, \-\-millisecond
-print in m:ss.nnn (millisecond) instead of m:ss.ff (frame) format
+print in m:ss.nnn (millisecond) instead of m:ss.ff (frame) format.
+.TP
+.B \-l, \-\-length
+print calculatable net length of each track (may exclude the last track).
 .TP
 .B \-p, \-\-prepend\-gaps
 prefixes pregaps to the beginning of each subsequent track.
@@ -89,8 +94,8 @@ are specified, all except the last encountered are ignored.
 exits with status zero if it successfully generates a report for each
 input file, and nonzero if there were problems.
 .SH AUTHOR
-Cuetools was written by Svend Sorensen & Budi Rachmanto.
-Branden Robinson contributed fixes and enhancements to the utilities and
+Cuetools was written by Svend Sorensen.
+Branden Robinson & Budi Rachmanto contributed fixes and enhancements to the utilities and
 documentation.
 .SH "SEE ALSO"
 .BR cueconvert (1),

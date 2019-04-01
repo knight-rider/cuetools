@@ -28,8 +28,10 @@ char *progname;
  * APPEND	append pregap to previous track (except for first track), default
  * PREPEND	prefix pregap to current track
  * SPLIT	print breakpoints for beginning and end of pregap
+
+ * LENGTH	print the net length of each track (except the last one)
  */
-enum GapMode {APPEND, PREPEND, SPLIT};
+enum GapMode {APPEND, LENGTH, PREPEND, SPLIT};
 
 void usage(int status)
 {
@@ -40,6 +42,7 @@ void usage(int status)
 		       "OPTIONS\n"
 		       "-h, --help			print usage\n"
 		       "-i, --input-format cue|toc	set format of file(s)\n"
+		       "-l, --length			print the net length of each track (except the last one)\n"
 		       "-m, --millisecond		print in m:ss.nnn (millisecond) instead of m:ss.ff (frame) format\n"
 		       "-p, --prepend-gaps		prefix pregaps to track\n"
 		       "-s, --split-gaps		split at beginning and end of pregaps\n"
@@ -67,10 +70,10 @@ void print_breakpoint(long frame, bool is_ms)
 		return;
 	if (is_ms) {
 		time_frame_to_ms(frame, &m, &n);
-		printf ("%d:%06.3f\n", m, n);
+		printf ("%02d:%06.3f\n", m, n);
 	} else {
 		time_frame_to_msf(frame, &m, &s, &f);
-		printf ("%d:%02d.%02d\n", m, s, f);
+		printf ("%02d:%02d.%02d\n", m, s, f);
 	}
 }
 
@@ -85,7 +88,6 @@ int breaks(char *name, enum Format format, enum GapMode gaps, bool is_ms)
 	struct Cd *cd = cf_parse(name, &format);
 	int	i,
 		n = cd_get_ntrack(cd);
-	long	end = 0;
 
 	if (!cd) {
 		fprintf(stderr, "%s: error: unable to parse input file"
@@ -99,24 +101,20 @@ int breaks(char *name, enum Format format, enum GapMode gaps, bool is_ms)
 			pre0	= track_get_zero_pre(track),
 			length	= track_get_length(track);
 
-		if (pre0 == -1)		// not set
-			pre0 = 0;
-		if (length == -1)	// not set
-			length = 0;
-
 		switch (gaps) {
-		case PREPEND:
-			print_breakpoint(start - pre0, is_ms);
-			break;
 		case APPEND:
 			print_breakpoint(start, is_ms);
 			break;
+		case LENGTH:
+			print_breakpoint(length, is_ms);
+			break;
+		case PREPEND:
+			print_breakpoint(start - (pre0 < 0 ? 0 : pre0), is_ms);
+			break;
 		case SPLIT:
-			if (end < start)
-				print_breakpoint(start, is_ms);
-			end = start + length;
+			print_breakpoint(start, is_ms);
 			if (length > 0)
-				print_breakpoint(end, is_ms);
+				print_breakpoint(start + length, is_ms);
 		}
 	}
 //cd_dump(cd);
@@ -139,6 +137,7 @@ int main(int argc, char *argv[])
 	static struct option longopts[] = {
 		{"help",		no_argument, NULL, 'h'},
 		{"input-format",	required_argument, NULL, 'i'},
+		{"length",		no_argument, NULL, 'l'},
 		{"millisecond",		no_argument, NULL, 'm'},
 		{"prepend-gaps",	no_argument, NULL, 'p'},
 		{"split-gaps",		no_argument, NULL, 's'},
@@ -148,7 +147,7 @@ int main(int argc, char *argv[])
 
 	progname = argv[0];
 
-	while (-1 != (c = getopt_long(argc, argv, "hi:mpsV", longopts, NULL))) {
+	while (-1 != (c = getopt_long(argc, argv, "hi:lmpsV", longopts, NULL))) {
 		switch (c) {
 		case 'h':
 			usage(0);
@@ -163,6 +162,9 @@ int main(int argc, char *argv[])
 				        " format `%s'\n", progname, optarg);
 				usage(1);
 			}
+			break;
+		case 'l':
+			gaps = LENGTH;
 			break;
 		case 'm':
 			is_ms = true;
