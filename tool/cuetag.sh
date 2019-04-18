@@ -197,12 +197,18 @@ main()
 		echo "warning: number of files does not match number of tracks"
 	fi
 
-	CUE_O=`echo $(dirname "$1")/$($CUEPRINT -d '%P - %Y - %T.cue' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
-	mv  "$CUE_O" "$CUE_O.orig"
-	grep -ve FILE -ve "INDEX 00" "$CUE_I"|sed 's|INDEX 01.*|INDEX 01 00:00:00|' > "$CUE_O"
+	CREATE_CUE=`cuebreakpoints "$CUE_I"`
+	if [ "$CREATE_CUE" ]; then
+		CUE_O=`echo $(dirname "$1")/$($CUEPRINT -d '%P - %Y - %T.cue' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
+		mv  "$CUE_O" "$CUE_O.orig"
+		grep -ve FILE -ve "INDEX 00" "$CUE_I"|sed 's|INDEX 01.*|INDEX 01 00:00:00|' > "$CUE_O"
+		echo "Creating non-compliant per-track CUE sheet: $CUE_O"
+	else
+		echo "Already splitted: $CUE_I"
+	fi
 
 	for file in "$@"; do
-		IDX0=`cuebreakpoints -l "$CUE_I"|cat -n|grep "\s$trackno\s"|sed "s/.*\s/    INDEX 00 /;s/\./:/"`
+		IDX0=`/data/guest/tmp/cuetools-master/tool/cuebreakpoints -l "$CUE_I"|grep "^$trackno\s"|sed "s/.*\s/    INDEX 00 /;s/\./:/"`
 		trackno=$(($trackno + 1))
 		LBL=`echo $(dirname "$file")/$($CUEPRINT -n $trackno -t '%02n %p - %t' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
 		TYPE="WAVE"
@@ -232,11 +238,13 @@ main()
 		esac
 		[[ $file != $LBL ]] && mv -v "$file" "$LBL"
 
-		TRK=`echo "FILE \"$LBL\" $TYPE\n"|sed 's|".*/|"|'`
-		cat "$CUE_O"|sed "s|^.*TRACK.*$trackno.*|$TRK&\n$IDX0|;s|\n$||" > cue.out
-		mv cue.out "$CUE_O"
+		if [ "$CREATE_CUE" ]; then
+			TFILE=`echo "FILE \"$LBL\" $TYPE\n"|sed 's|".*/|"|'`
+			TRKNO=`echo $trackno|sed 's/^.$/0&/'`
+			cat "$CUE_O"|sed "s|^.*TRACK.*$TRKNO.*|$TFILE&\n$IDX0|;s|\n$||" > cue.out
+			mv cue.out "$CUE_O"
+		fi
 	done
-	echo "Created non-compliant per-track CUE sheet: $CUE_O"
 }
 
 main "$@"

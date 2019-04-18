@@ -29,7 +29,7 @@ char *progname;
  * PREPEND	prefix pregap to current track
  * SPLIT	print breakpoints for beginning and end of pregap
 
- * LENGTH	print the net length of each track (except the last one)
+ * LENGTH	print the net length of each track
  */
 enum GapMode {APPEND, LENGTH, PREPEND, SPLIT};
 
@@ -42,7 +42,7 @@ void usage(int status)
 		       "OPTIONS\n"
 		       "-h, --help			print usage\n"
 		       "-i, --input-format cue|toc	set format of file(s)\n"
-		       "-l, --length			print the net length of each track (except the last one)\n"
+		       "-l, --length			print the net length of each track\n"
 		       "-m, --millisecond		print in m:ss.nnn (millisecond) instead of m:ss.ff (frame) format\n"
 		       "-p, --prepend-gaps		prefix pregaps to track\n"
 		       "-s, --split-gaps		split at beginning and end of pregaps\n"
@@ -70,10 +70,10 @@ void print_breakpoint(long frame, bool is_ms)
 		return;
 	if (is_ms) {
 		time_frame_to_ms(frame, &m, &n);
-		printf ("%02d:%06.3f\n", m, n);
+		printf("%02d:%06.3f\n", m, n);
 	} else {
 		time_frame_to_msf(frame, &m, &s, &f);
-		printf ("%02d:%02d.%02d\n", m, s, f);
+		printf("%02d:%02d.%02d\n", m, s, f);
 	}
 }
 
@@ -106,7 +106,10 @@ int breaks(char *name, enum Format format, enum GapMode gaps, bool is_ms)
 			print_breakpoint(start, is_ms);
 			break;
 		case LENGTH:
+			printf("%d\t", i);
 			print_breakpoint(length, is_ms);
+			if (length <= 0)
+				printf("\n");
 			break;
 		case PREPEND:
 			print_breakpoint(start - (pre0 < 0 ? 0 : pre0), is_ms);
