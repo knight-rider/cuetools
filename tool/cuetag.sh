@@ -208,7 +208,7 @@ main()
 	fi
 
 	for file in "$@"; do
-		IDX0=`/data/guest/tmp/cuetools-master/tool/cuebreakpoints -l "$CUE_I"|grep "^$trackno\s"|sed "s/.*\s/    INDEX 00 /;s/\./:/"`
+		IDX0=`cuebreakpoints -l "$CUE_I"|grep "^$trackno\s"|sed "s/.*\s/    INDEX 00 /;s/\./:/"`
 		trackno=$(($trackno + 1))
 		LBL=`echo $(dirname "$file")/$($CUEPRINT -n $trackno -t '%02n %p - %t' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
 		TYPE="WAVE"
