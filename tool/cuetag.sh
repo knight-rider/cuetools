@@ -129,6 +129,9 @@ id3()
 	GENRE='%g'
 	TRACKNUMBER='%n'
 
+#	echo
+#	echo "$2"
+
 	for field in $fields; do
 		case "$field" in
 		*=*) value="${field#*=}";;
@@ -143,6 +146,7 @@ id3()
 			done
 			;;
 		esac
+#		echo "$field" "$value"
 
 		if [ -n "$value" ]; then
 			case $field in
@@ -188,27 +192,26 @@ main()
 	NUM_FILES=0 FIELDS=
 	for arg in "$@"; do
 		case "$arg" in
+		*.[Cc][Uu][Ee]) echo "ERROR: multiple CUE input"; exit 1;;
 		*.*) NUM_FILES=$(expr $NUM_FILES + 1);;
 		*) FIELDS="$FIELDS $arg";;
 		esac
 	done
 
 	if [ $NUM_FILES -ne $ntrack ]; then
-		echo "warning: number of files does not match number of tracks"
+		echo "ERROR: number of files ($NUM_FILES) does not match number of tracks ($ntrack)"
+		exit 1
 	fi
 
-	CREATE_CUE=`cuebreakpoints "$CUE_I"`
-	if [ "$CREATE_CUE" ]; then
-		CUE_O=`echo $(dirname "$1")/$($CUEPRINT -d '%P - %Y - %T.cue' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
-		mv  "$CUE_O" "$CUE_O.orig"
-		grep -ve FILE -ve "INDEX 00" "$CUE_I"|sed 's|INDEX 01.*|INDEX 01 00:00:00|' > "$CUE_O"
-		echo "Creating non-compliant per-track CUE sheet: $CUE_O"
-	else
-		echo "Already splitted: $CUE_I"
-	fi
+	CUE_O=`echo $(dirname "$1")/$($CUEPRINT -d '%P - %Y - %T.cue' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
+	[[ -f $CUE_O ]] && mv "$CUE_O" "BAK $CUE_O"
+	[[ $CUE_I = $CUE_O ]] && CUE_I="BAK $CUE_O"
+	$CUEPRINT -d 'PERFORMER \"%P\"\nTITLE \"%T\"\n' "$CUE_I" > "$CUE_O"
+	grep -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I" >> "$CUE_O"
+	echo "Creating multi-file CUE sheet: $CUE_O"
 
 	for file in "$@"; do
-		IDX0=`cuebreakpoints -l "$CUE_I"|grep "^$trackno\s"|sed "s/.*\s/    INDEX 00 /;s/\./:/"`
+		IDX0=`cuebreakpoints -l "$CUE_I"|grep "^$trackno\s"|sed "s/.*\s//;s/./    INDEX 00 &/;s/\./:/"`
 		trackno=$(($trackno + 1))
 		LBL=`echo $(dirname "$file")/$($CUEPRINT -n $trackno -t '%02n %p - %t' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
 		TYPE="WAVE"
@@ -232,18 +235,22 @@ main()
 			LBL="$LBL.txt"
 			;;
 		*.*)
-			echo "$file: unknown file type"
-			continue
+			echo "ERROR: unknown file type ($file), aborted!"
+			exit 1
 			;;
 		esac
 		[[ $file != $LBL ]] && mv -v "$file" "$LBL"
 
-		if [ "$CREATE_CUE" ]; then
-			TFILE=`echo "FILE \"$LBL\" $TYPE\n"|sed 's|".*/|"|'`
-			TRKNO=`echo $trackno|sed 's/^.$/0&/'`
-			cat "$CUE_O"|sed "s|^.*TRACK.*$TRKNO.*|$TFILE&\n$IDX0|;s|\n$||" > cue.out
-			mv cue.out "$CUE_O"
+		TFILE=`echo "FILE \"$LBL\" $TYPE\n"|sed 's|".*/|"|;s/\&/\\\&/g'`
+		TITLE=`$CUEPRINT -n $trackno -t '%t' "$CUE_I"|sed 's/\&/\\\&/g'`
+		PERFORMER=`$CUEPRINT -n $trackno -t '%p' "$CUE_I"|sed 's/\&/\\\&/g'`
+		TRKNO=`echo $trackno|sed 's/^.$/0&/'`
+		if [ $trackno -eq 1 ]; then
+			sed "s|^.*TRACK.*$TRKNO.*|\n$TFILE&\n    TITLE \"$TITLE\"\n    PERFORMER \"$PERFORMER\"\n$IDX0\n    INDEX 01 00:00:00|;s|\n\n|\n|" "$CUE_O" > cue.out
+		else
+			sed "s|^.*TRACK.*$TRKNO.*|\n&\n    TITLE \"$TITLE\"\n    PERFORMER \"$PERFORMER\"\n$IDX0\n$TFILE    INDEX 01 00:00:00|;s|\n\n|\n|" "$CUE_O" > cue.out
 		fi
+		mv cue.out "$CUE_O"
 	done
 }
 

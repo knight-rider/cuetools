@@ -37,7 +37,6 @@ UPC/EAN:	%U\n\
 "
 
 #define T_TEMPLATE "\
-\n\
 Track %n Information\n\
 arranger:	%a\n\
 composer:	%c\n\
