@@ -207,7 +207,7 @@ main()
 	[[ -f $CUE_O ]] && mv "$CUE_O" "BAK $CUE_O"
 	[[ $CUE_I = $CUE_O ]] && CUE_I="BAK $CUE_O"
 	$CUEPRINT -d 'PERFORMER \"%P\"\nTITLE \"%T\"\n' "$CUE_I" > "$CUE_O"
-	grep -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I" | sed 's/^\xEF\xBB\xBF//' >> "$CUE_O"
+	grep -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I" | sed 's/^\xEF\xBB\xBF//;s/\r//' >> "$CUE_O"
 	echo "Creating multi-file CUE sheet: $CUE_O"
 
 	for file in "$@"; do
