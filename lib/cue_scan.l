@@ -18,8 +18,9 @@ char yy_buffer[PARSER_BUFFER];
 int yylex(void);
 %}
 
-ws		[ \t\r]
-nonws		[^ \t\r\n]
+bom	\xEF\xBB\xBF
+ws	[ \t\r]
+nonws	[^ \t\r\n]
 
 %option yylineno
 %option noyywrap
@@ -131,6 +132,7 @@ REM		{ BEGIN(REM); /* exclusive rules for special exceptions */ }
 <SKIP>.*\n	{ BEGIN(INITIAL); yylineno++; return '\n'; }
 
 {ws}+		{ /* ignore whitespace */ }
+{bom}		{ /* ignore Byte Order Mark */ }
 
 [[:digit:]]+	{ yylval.ival = atoi(yytext); return NUMBER; }
 :		{ return yytext[0]; }
@@ -140,6 +142,6 @@ REM		{ BEGIN(REM); /* exclusive rules for special exceptions */ }
 
 ^{ws}*\n	{ yylineno++; /* blank line */ }
 \n		{ yylineno++; return '\n'; }
-.		{ fprintf(stderr, "bad character '%c'\n", yytext[0]); }
+.		{ fprintf(stderr, "bad character '%c' (0x%X)\n", yytext[0], yytext[0]); }
 
 %%

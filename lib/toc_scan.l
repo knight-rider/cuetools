@@ -17,8 +17,9 @@
 int toc_lineno = 1;
 %}
 
-ws		[ \t\r]
-nonws		[^ \t\r\n]
+bom	\xEF\xBB\xBF
+ws	[ \t\r]
+nonws	[^ \t\r\n]
 
 %option noyywrap
 %option prefix="toc_yy"
@@ -95,12 +96,13 @@ SIZE_INFO	{ BEGIN(NAME); yylval.ival = PTI_SIZE_INFO;  return SIZE_INFO; }
 
 "//".*\n	{ toc_lineno++; /* ignore comments */ }
 {ws}+		{ /* ignore whitespace */ }
+{bom}		{ /* ignore Byte Order Mark */ }
 
 [[:digit:]]+	{ yylval.ival = atoi(yytext); return NUMBER; }
 :|,|\{|\}	{ return yytext[0]; }
 
 ^{ws}*\n	{ toc_lineno++; /* blank line */ }
 \n		{ toc_lineno++; return '\n'; }
-.		{ fprintf(stderr, "bad character '%c'\n", yytext[0]); }
+.		{ fprintf(stderr, "bad character '%c' (0x%X)\n", yytext[0], yytext[0]); }
 
 %%
