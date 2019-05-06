@@ -245,10 +245,10 @@ main()
 		TITLE=`$CUEPRINT -n $trackno -t '%t' "$CUE_I"|sed 's/\&/\\\&/g'`
 		PERFORMER=`$CUEPRINT -n $trackno -t '%p' "$CUE_I"|sed 's/\&/\\\&/g'`
 		TRKNO=`echo $trackno|sed 's/^.$/0&/'`
-		if [ $trackno -eq 1 ]; then
-			sed "s|^.*TRACK.*$TRKNO.*|\n$TFILE&\n    TITLE \"$TITLE\"\n    PERFORMER \"$PERFORMER\"\n$IDX0\n    INDEX 01 00:00:00|;s|\n\n|\n|" "$CUE_O" > cue.out
+		if [ "$IDX0" ]; then
+			sed "s|^.*TRACK.*$TRKNO.*|\n&\n    TITLE \"$TITLE\"\n    PERFORMER \"$PERFORMER\"\n$IDX0\n$TFILE    INDEX 01 00:00:00|" "$CUE_O" > cue.out
 		else
-			sed "s|^.*TRACK.*$TRKNO.*|\n&\n    TITLE \"$TITLE\"\n    PERFORMER \"$PERFORMER\"\n$IDX0\n$TFILE    INDEX 01 00:00:00|;s|\n\n|\n|" "$CUE_O" > cue.out
+			sed "s|^.*TRACK.*$TRKNO.*|\n$TFILE&\n    TITLE \"$TITLE\"\n    PERFORMER \"$PERFORMER\"\n    INDEX 01 00:00:00|" "$CUE_O" > cue.out
 		fi
 		mv cue.out "$CUE_O"
 	done
