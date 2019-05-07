@@ -142,6 +142,6 @@ REM		{ BEGIN(REM); /* exclusive rules for special exceptions */ }
 
 ^{ws}*\n	{ yylineno++; /* blank line */ }
 \n		{ yylineno++; return '\n'; }
-.		{ fprintf(stderr, "bad character '%c' (0x%X)\n", yytext[0], yytext[0]); }
+.		{ fprintf(stderr, "bad character '%c' (0x%02X)\n", yytext[0], (unsigned char)yytext[0]); }
 
 %%

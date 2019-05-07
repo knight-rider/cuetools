@@ -103,6 +103,6 @@ SIZE_INFO	{ BEGIN(NAME); yylval.ival = PTI_SIZE_INFO;  return SIZE_INFO; }
 
 ^{ws}*\n	{ toc_lineno++; /* blank line */ }
 \n		{ toc_lineno++; return '\n'; }
-.		{ fprintf(stderr, "bad character '%c' (0x%X)\n", yytext[0], yytext[0]); }
+.		{ fprintf(stderr, "bad character '%c' (0x%02X)\n", yytext[0], (unsigned char)yytext[0]); }
 
 %%
