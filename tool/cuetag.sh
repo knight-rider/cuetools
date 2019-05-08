@@ -203,8 +203,9 @@ main()
 		exit 1
 	fi
 
-	CUE_O=`echo $(dirname "$1")/$($CUEPRINT -d '%P - %Y - %T.cue' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
-	[[ -f $CUE_O ]] && mv "$CUE_O" "BAK $CUE_O"
+	CDNO=`$CUEPRINT -d '%D' "$CUE_I"|sed 's/.*/ CD&/'`
+	CUE_O=`echo $(dirname "$1")/$($CUEPRINT -d "%P - %Y - %T$CDNO.cue" "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
+	[[ -f $CUE_O ]] && mv -v "$CUE_O" "BAK $CUE_O"
 	[[ $CUE_I = $CUE_O ]] && CUE_I="BAK $CUE_O"
 	$CUEPRINT -d 'PERFORMER \"%P\"\nTITLE \"%T\"\n' "$CUE_I" > "$CUE_O"
 	grep -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I" | sed 's/^\xEF\xBB\xBF//;s/\r//' >> "$CUE_O"
