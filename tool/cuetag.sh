@@ -12,8 +12,9 @@ usage()
 {
 	echo
 	echo "usage: cuetag.sh <cuefile|tocfile> [file]..."
+	echo "       cuetag.sh <cuefile|tocfile>"
 	echo
-	echo "cuetag.sh adds tags to files based on cue or toc information"
+	echo "cuetag.sh adds tags to files based on CUE/TOC information"
 	echo
 	echo "Supported formats (format extension, format name, tagging utility):"
 	echo "ogg, Ogg Vorbis, vorbiscomment"
@@ -188,6 +189,16 @@ main()
 
 	ntrack=$($CUEPRINT -d '%N' "$CUE_I")
 	trackno=0
+
+	if [[ -z $@ ]]; then
+		echo "WARNING: no filename given, will use name(s) in CUE/TOC sheet"
+		while [ $trackno -lt $ntrack ]; do
+			trackno=$(($trackno + 1))
+			files[$trackno]=`$CUEPRINT -n $trackno -t '%f' "$CUE_I"`
+		done
+		set "${files[@]}"
+		trackno=0
+	fi
 
 	NUM_FILES=0 FIELDS=
 	for arg in "$@"; do

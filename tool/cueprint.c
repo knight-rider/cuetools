@@ -25,13 +25,13 @@
 Disc Information\n\
 arranger:	%A\n\
 composer:	%C\n\
+disc no.:	%D\n\
 genre:		%G\n\
 message:	%M\n\
 no. of tracks:	%N\n\
 performer:	%P\n\
 songwriter:	%S\n\
 title:		%T\n\
-disc no.:	%D\n\
 year/date:	%Y\n\
 UPC/EAN:	%U\n\
 "
@@ -40,6 +40,7 @@ UPC/EAN:	%U\n\
 Track %n Information\n\
 arranger:	%a\n\
 composer:	%c\n\
+filename:	%f\n\
 genre:		%g\n\
 ISRC:		%i\n\
 message:	%m\n\
