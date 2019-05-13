@@ -11,7 +11,7 @@ CUE_I=""
 usage()
 {
 	echo
-	echo "usage: cuetag.sh <cuefile|tocfile> [file]..."
+	echo "usage: cuetag.sh <cuefile|tocfile> [file|tagfield]..."
 	echo "       cuetag.sh <cuefile|tocfile>"
 	echo
 	echo "cuetag.sh adds tags to files based on CUE/TOC information"
@@ -21,6 +21,10 @@ usage()
 	echo "flac, FLAC, metaflac"
 	echo "mp3, MP3, mp3info"
 	echo "txt, Vorbis Comment Text File, tee"
+	echo
+	echo "Supported tag fields:"
+	echo "ogg/flac: ALBUM ALBUMARTIST ARTIST CONTACT COPYRIGHT DATE DESCRIPTION DISCNUMBER GENRE ISRC LICENSE LOCATION ORGANIZATION PERFORMER TITLE TRACKNUMBER TRACKTOTAL VERSION"
+	echo "mp3: TITLE ALBUM ARTIST YEAR COMMENT GENRE TRACKNUMBER"
 	echo
 	echo "cuetag.sh uses cueprint, which must be in your path"
 }
@@ -114,9 +118,14 @@ id3()
 		exit 1
 	fi
 
+	trackno=$1; shift
+	file="$1"; shift
+	fields="$@"
+
 	# space separated list of ID3 v1.1 tags
 	# see http://id3lib.sourceforge.net/id3/idev1.html
 
+	[ -n "$fields" ] ||
 	fields="TITLE ALBUM ARTIST YEAR COMMENT GENRE TRACKNUMBER"
 
 	# fields' corresponding cueprint conversion characters
@@ -130,16 +139,13 @@ id3()
 	GENRE='%g'
 	TRACKNUMBER='%n'
 
-#	echo
-#	echo "$2"
-
 	for field in $fields; do
 		case "$field" in
 		*=*) value="${field#*=}";;
 		*)
 			value=""
 			for conv in $(eval echo \$$field); do
-				value=$($CUEPRINT -n $1 -t "$conv\n" "$CUE_I")
+				value=$($CUEPRINT -n $trackno -t "$conv\n" "$CUE_I")
 
 				if [ -n "$value" ]; then
 					break
@@ -147,30 +153,29 @@ id3()
 			done
 			;;
 		esac
-#		echo "$field" "$value"
 
 		if [ -n "$value" ]; then
 			case $field in
 			TITLE)
-				$MP3TAG -t "$value" "$2"
+				$MP3TAG -t "$value" "$file"
 				;;
 			ALBUM)
-				$MP3TAG -A "$value" "$2"
+				$MP3TAG -A "$value" "$file"
 				;;
 			ARTIST)
-				$MP3TAG -a "$value" "$2"
+				$MP3TAG -a "$value" "$file"
 				;;
 			YEAR)
-				$MP3TAG -y "$value" "$2"
+				$MP3TAG -y "$value" "$file"
 				;;
 			COMMENT)
-				$MP3TAG -c "$value" "$2"
+				$MP3TAG -c "$value" "$file"
 				;;
 			GENRE)
-				$MP3TAG -g "$value" "$2"
+				$MP3TAG -g "$value" "$file"
 				;;
 			TRACKNUMBER)
-				$MP3TAG -T "$value" "$2"
+				$MP3TAG -T "$value" "$file"
 				;;
 			esac
 		fi
@@ -200,29 +205,33 @@ main()
 		trackno=0
 	fi
 
-	NUM_FILES=0 FIELDS=
+	NFILE=0 FIELDS=
 	for arg in "$@"; do
 		case "$arg" in
-		*.[Cc][Uu][Ee]) echo "ERROR: multiple CUE input"; exit 1;;
-		*.*) NUM_FILES=$(expr $NUM_FILES + 1);;
+		*.[Cc][Uu][Ee] | *.[Tt][Oo][Cc]) echo "ERROR: multiple CUE/TOC input"; exit 1;;
+		*.[Ff][Ll][Aa][Cc] | *.[Oo][Gg][Gg] | *.[Mm][Pp]3 | *.[Tt][Xx][Tt])
+			[[ ! -f $arg ]] && continue
+			NFILE=$(($NFILE + 1))
+			FILE[$NFILE]=$arg
+			;;
 		*) FIELDS="$FIELDS $arg";;
 		esac
 	done
 
-	if [ $NUM_FILES -ne $ntrack ]; then
-		echo "ERROR: number of files ($NUM_FILES) does not match number of tracks ($ntrack)"
+	if [ $NFILE -ne $ntrack ]; then
+		echo "ERROR: number of files ($NFILE) does not match number of tracks ($ntrack)"
 		exit 1
 	fi
 
 	CDNO=`$CUEPRINT -d '%D' "$CUE_I"|sed 's/.*/ CD&/'`
-	CUE_O=`echo $(dirname "$1")/$($CUEPRINT -d "%P - %Y - %T$CDNO.cue" "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
+	CUE_O=`echo $(dirname "${FILE[1]}")/$($CUEPRINT -d "%P - %Y - %T$CDNO.cue" "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
 	[[ -f $CUE_O ]] && mv -v "$CUE_O" "BAK $CUE_O"
 	[[ $CUE_I = $CUE_O ]] && CUE_I="BAK $CUE_O"
 	$CUEPRINT -d 'PERFORMER \"%P\"\nTITLE \"%T\"\n' "$CUE_I" > "$CUE_O"
 	grep -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I" | sed 's/^\xEF\xBB\xBF//;s/\r//' >> "$CUE_O"
 	echo "Creating multi-file CUE sheet: $CUE_O"
 
-	for file in "$@"; do
+	for file in "${FILE[@]}"; do
 		IDX0=`cuebreakpoints -l "$CUE_I"|grep "^$trackno\s"|sed "s/.*\s//;s/./    INDEX 00 &/;s/\./:/"`
 		trackno=$(($trackno + 1))
 		LBL=`echo $(dirname "$file")/$($CUEPRINT -n $trackno -t '%02n %p - %t' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
@@ -245,10 +254,6 @@ main()
 		*.[Tt][Xx][Tt])
 			vorbis $trackno "$file"
 			LBL="$LBL.txt"
-			;;
-		*.*)
-			echo "ERROR: unknown file type ($file), aborted!"
-			exit 1
 			;;
 		esac
 		[[ $file != $LBL ]] && mv -v "$file" "$LBL"
