@@ -33,7 +33,7 @@ usage()
 # for FLAC and Ogg Vorbis files
 vorbis()
 {
-	trackno=$1; shift
+	TRKNO=$1; shift
 	file="$1"; shift
 	fields="$@"
 
@@ -71,10 +71,6 @@ vorbis()
 
 	# fields' corresponding cueprint conversion characters
 	# separate alternates with a space
-
-	ALBUM='%T'
-	ALBUMARTIST='%C %P'
-	ARTIST='%c %p'
 	CONTACT=''
 	COPYRIGHT=''
 	DATE='%Y'
@@ -86,10 +82,15 @@ vorbis()
 	LOCATION=''
 	ORGANIZATION=''
 	PERFORMER='%p'
-	TITLE='%t'
 	TRACKNUMBER='%02n'
 	TRACKTOTAL='%02N'
 	VERSION=''
+
+	# The followings are taken from global variables
+#	ALBUM='%T'
+#	ALBUMARTIST='%C %P'
+#	ARTIST='%c %p'
+#	TITLE='%t'
 
 	(for field in $fields; do
 		 case "$field" in
@@ -97,7 +98,7 @@ vorbis()
 		 (*)
 			 value=""
 			 for conv in $(eval echo \$$field); do
-				 value=$($CUEPRINT -n $trackno -t "$conv\n" "$CUE_I")
+				 value=$($CUEPRINT -n $TRKNO -t "$conv\n" "$CUE_I")
 
 				 if [ -n "$value" ]; then
 					 echo "$field=$value"
@@ -118,7 +119,7 @@ id3()
 		exit 1
 	fi
 
-	trackno=$1; shift
+	TRKNO=$1; shift
 	file="$1"; shift
 	fields="$@"
 
@@ -130,14 +131,15 @@ id3()
 
 	# fields' corresponding cueprint conversion characters
 	# separate alternates with a space
-
-	TITLE='%t'
-	ALBUM='%T'
-	ARTIST='%p'
 	YEAR='%Y'
 	COMMENT='%c'
 	GENRE='%g'
 	TRACKNUMBER='%n'
+
+	# The followings are taken from global variables
+#	TITLE='%t'
+#	ALBUM='%T'
+#	ARTIST='%p'
 
 	for field in $fields; do
 		case "$field" in
@@ -145,7 +147,7 @@ id3()
 		*)
 			value=""
 			for conv in $(eval echo \$$field); do
-				value=$($CUEPRINT -n $trackno -t "$conv\n" "$CUE_I")
+				value=$($CUEPRINT -n $TRKNO -t "$conv\n" "$CUE_I")
 
 				if [ -n "$value" ]; then
 					break
@@ -182,6 +184,17 @@ id3()
 	done
 }
 
+# Wikipedia Style Capitalization Rules
+cap()
+{
+	local s=`echo $@|sed 's/\b\(.\)/\u\1/g;
+		s/\s\(A\|An\|The\)\s/\L&/g;
+		s/\s\(And\|But\|Or\|Nor\)\s/\L&/g;
+		s/\s\(As\|At\|In\|On\|Upon\)\s/\L&/g;
+		s/\s\(For\|From\|Of\|Into\|To\|With\)\s/\L&/g;'`
+	echo $s
+}
+
 main()
 {
 	if [[ $# -lt 1 || -z $CUEPRINT ]]; then
@@ -193,16 +206,16 @@ main()
 	shift
 
 	ntrack=$($CUEPRINT -d '%N' "$CUE_I")
-	trackno=0
+	TRKNO=0
 
 	if [[ -z $@ ]]; then
 		echo "WARNING: no filename given, will use name(s) in CUE/TOC sheet"
-		while [ $trackno -lt $ntrack ]; do
-			trackno=$(($trackno + 1))
-			files[$trackno]=`$CUEPRINT -n $trackno -t '%f' "$CUE_I"`
+		while [ $TRKNO -lt $ntrack ]; do
+			TRKNO=$(($TRKNO + 1))
+			files[$TRKNO]=`$CUEPRINT -n $TRKNO -t '%f' "$CUE_I"`
 		done
 		set "${files[@]}"
-		trackno=0
+		TRKNO=0
 	fi
 
 	NFILE=0 FIELDS=
@@ -223,49 +236,54 @@ main()
 		exit 1
 	fi
 
+	ALBUMARTIST=`cap $($CUEPRINT -d '%P' "$CUE_I")`
+	YEAR=`$CUEPRINT -d '%Y' "$CUE_I"`
+	ALBUM=`cap $($CUEPRINT -d '%T' "$CUE_I")`
 	CDNO=`$CUEPRINT -d '%D' "$CUE_I"|sed 's/.*/ CD&/'`
-	CUE_O=`echo $(dirname "${FILE[1]}")/$($CUEPRINT -d "%P - %Y - %T$CDNO.cue" "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
+
+	CUE_O=`echo $(dirname "${FILE[1]}")/$(echo "$ALBUMARTIST - $YEAR - $ALBUM$CDNO.cue"|sed 's.[/|\].-.g')|sed 's|^\./||'`
+	echo "Creating multi-file CUE sheet: $CUE_O"
 	[[ -f $CUE_O ]] && mv -v "$CUE_O" "BAK $CUE_O"
 	[[ $CUE_I = $CUE_O ]] && CUE_I="BAK $CUE_O"
-	$CUEPRINT -d 'PERFORMER \"%P\"\nTITLE \"%T\"\n' "$CUE_I" > "$CUE_O"
+
+	echo PERFORMER \"$ALBUMARTIST\" > "$CUE_O"
+	echo TITLE \"$ALBUM\" >> "$CUE_O"
 	grep -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I" | sed 's/^\xEF\xBB\xBF//;s/\r//' >> "$CUE_O"
-	echo "Creating multi-file CUE sheet: $CUE_O"
 
 	for file in "${FILE[@]}"; do
-		IDX0=`cuebreakpoints -l "$CUE_I"|grep "^$trackno\s"|sed "s/.*\s//;s/./    INDEX 00 &/;s/\./:/"`
-		trackno=$(($trackno + 1))
-		LBL=`echo $(dirname "$file")/$($CUEPRINT -n $trackno -t '%02n %p - %t' "$CUE_I"|sed 's.[/|\].-.g')|sed 's|^\./||'`
+		IDX0=`cuebreakpoints -l "$CUE_I"|grep "^$TRKNO\s"|sed "s/.*\s//;s/./    INDEX 00 &/;s/\./:/"`
+		TRKNO=`echo $(expr $TRKNO + 1)|sed 's/^.$/0&/'`
+		ARTIST=`cap $($CUEPRINT -n $TRKNO -t '%p' "$CUE_I")`
+		TITLE=`cap $($CUEPRINT -n $TRKNO -t '%t' "$CUE_I")`
+		LBL=`echo $(dirname "$file")/$(echo $TRKNO $ARTIST - $TITLE|sed 's.[/|\].-.g')|sed 's|^\./||'`
 		TYPE="WAVE"
 
 		case $file in
 		*.[Ff][Ll][Aa][Cc])
-			vorbis $trackno "$file" $FIELDS
+			vorbis $TRKNO "$file" $FIELDS
 			LBL="$LBL.flac"
 			;;
 		*.[Oo][Gg][Gg])
-			vorbis $trackno "$file" $FIELDS
+			vorbis $TRKNO "$file" $FIELDS
 			LBL="$LBL.ogg"
 			;;
 		*.[Mm][Pp]3)
-			id3 $trackno "$file" $FIELDS
+			id3 $TRKNO "$file" $FIELDS
 			LBL="$LBL.mp3"
 			TYPE="MP3"
 			;;
 		*.[Tt][Xx][Tt])
-			vorbis $trackno "$file"
+			vorbis $TRKNO "$file"
 			LBL="$LBL.txt"
 			;;
 		esac
-		[[ $file != $LBL ]] && mv -v "$file" "$LBL"
+		[ "$file" != "$LBL" ] && mv -v "$file" "$LBL"
 
-		TFILE=`echo "FILE \"$LBL\" $TYPE\n"|sed 's|".*/|"|;s/\&/\\\&/g'`
-		TITLE=`$CUEPRINT -n $trackno -t '%t' "$CUE_I"|sed 's/\&/\\\&/g'`
-		PERFORMER=`$CUEPRINT -n $trackno -t '%p' "$CUE_I"|sed 's/\&/\\\&/g'`
-		TRKNO=`echo $trackno|sed 's/^.$/0&/'`
+		TFILE=`echo "FILE \"$LBL\" $TYPE\n"|sed 's|".*/|"|'`
 		if [ "$IDX0" ]; then
-			sed "s|^.*TRACK.*$TRKNO.*|\n&\n    TITLE \"$TITLE\"\n    PERFORMER \"$PERFORMER\"\n$IDX0\n$TFILE    INDEX 01 00:00:00|" "$CUE_O" > cue.out
+			sed "s/\&/\\\&/g;s|^.*TRACK.*$TRKNO.*|\n&\n    TITLE \"$TITLE\"\n    PERFORMER \"$ARTIST\"\n$IDX0\n$TFILE    INDEX 01 00:00:00|" "$CUE_O" > cue.out
 		else
-			sed "s|^.*TRACK.*$TRKNO.*|\n$TFILE&\n    TITLE \"$TITLE\"\n    PERFORMER \"$PERFORMER\"\n    INDEX 01 00:00:00|" "$CUE_O" > cue.out
+			sed "s/\&/\\\&/g;s|^.*TRACK.*$TRKNO.*|\n$TFILE&\n    TITLE \"$TITLE\"\n    PERFORMER \"$ARTIST\"\n    INDEX 01 00:00:00|" "$CUE_O" > cue.out
 		fi
 		mv cue.out "$CUE_O"
 	done

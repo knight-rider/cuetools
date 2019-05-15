@@ -106,7 +106,7 @@ int breaks(char *name, enum Format format, enum GapMode gaps, bool is_ms)
 			print_breakpoint(start, is_ms);
 			break;
 		case LENGTH:
-			printf("%d\t", i);
+			printf("%02d\t", i);
 			print_breakpoint(length, is_ms);
 			if (length <= 0)
 				printf("\n");
