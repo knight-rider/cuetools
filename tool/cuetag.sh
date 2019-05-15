@@ -187,11 +187,12 @@ id3()
 # Wikipedia Style Capitalization Rules
 cap()
 {
-	local s=`echo $@|sed 's/\b\(.\)/\u\1/g;
+	local s=`echo $@|sed "s/\b./\u\0/g;
+		s/\(\w\)'\(.\)/\1'\L\2/g;
 		s/\s\(A\|An\|The\)\s/\L&/g;
 		s/\s\(And\|But\|Or\|Nor\)\s/\L&/g;
 		s/\s\(As\|At\|In\|On\|Upon\)\s/\L&/g;
-		s/\s\(For\|From\|Of\|Into\|To\|With\)\s/\L&/g;'`
+		s/\s\(For\|From\|Of\|Into\|To\|With\)\s/\L&/g;"`
 	echo $s
 }
 
@@ -279,11 +280,12 @@ main()
 		esac
 		[ "$file" != "$LBL" ] && mv -v "$file" "$LBL"
 
-		TFILE=`echo "FILE \"$LBL\" $TYPE\n"|sed 's|".*/|"|'`
+		TFILE=`echo "FILE \"$LBL\" $TYPE\n"|sed 's|".*/|"|;s/\&/\\\&/g'`
+		TITLEARTIST=`echo "\n    TITLE \"$TITLE\"\n    PERFORMER \"$ARTIST\"\n"|sed 's|".*/|"|;s/\&/\\\&/g'`
 		if [ "$IDX0" ]; then
-			sed "s/\&/\\\&/g;s|^.*TRACK.*$TRKNO.*|\n&\n    TITLE \"$TITLE\"\n    PERFORMER \"$ARTIST\"\n$IDX0\n$TFILE    INDEX 01 00:00:00|" "$CUE_O" > cue.out
+			sed "s|^.*TRACK.*$TRKNO.*|\n&$TITLEARTIST$IDX0\n$TFILE    INDEX 01 00:00:00|" "$CUE_O" > cue.out
 		else
-			sed "s/\&/\\\&/g;s|^.*TRACK.*$TRKNO.*|\n$TFILE&\n    TITLE \"$TITLE\"\n    PERFORMER \"$ARTIST\"\n    INDEX 01 00:00:00|" "$CUE_O" > cue.out
+			sed "s|^.*TRACK.*$TRKNO.*|\n$TFILE&$TITLEARTIST    INDEX 01 00:00:00|" "$CUE_O" > cue.out
 		fi
 		mv cue.out "$CUE_O"
 	done
