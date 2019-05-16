@@ -244,8 +244,9 @@ main()
 
 	CUE_O=`echo $(dirname "${FILE[1]}")/$(echo "$ALBUMARTIST - $YEAR - $ALBUM$CDNO.cue"|sed 's.[/|\].-.g')|sed 's|^\./||'`
 	echo "Creating multi-file CUE sheet: $CUE_O"
-	[[ -f $CUE_O ]] && mv -v "$CUE_O" "BAK $CUE_O"
-	[[ $CUE_I = $CUE_O ]] && CUE_I="BAK $CUE_O"
+	BAK="`dirname "$CUE_O"`/BAK `basename "$CUE_O"`"
+	[[ -f $CUE_O ]] && mv -v "$CUE_O" "$BAK"
+	[[ $CUE_I = $CUE_O ]] && CUE_I=$BAK
 
 	echo PERFORMER \"$ALBUMARTIST\" > "$CUE_O"
 	echo TITLE \"$ALBUM\" >> "$CUE_O"
