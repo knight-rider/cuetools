@@ -93,21 +93,24 @@ vorbis()
 #	TITLE='%t'
 
 	(for field in $fields; do
-		 case "$field" in
-		 (*=*) echo "$field";;
-		 (*)
-			 value=""
-			 for conv in $(eval echo \$$field); do
-				 value=$($CUEPRINT -n $TRKNO -t "$conv\n" "$CUE_I")
-
-				 if [ -n "$value" ]; then
-					 echo "$field=$value"
-					 break
-				 fi
-			 done
-			 ;;
-		 esac
-	 done) | $VORBISTAG "$file"
+		case "$field" in
+		(*=*) echo "$field";;
+		(*)
+			values=$(eval echo \$$field)
+			if [ "${values:0:1}" != '%' ]; then
+				echo "$field=$values"
+				continue
+			fi
+			for conv in $values; do
+				value=$($CUEPRINT -n $TRKNO -t "$conv\n" "$CUE_I")
+				if [ -n "$value" ]; then
+					echo "$field=$value"
+					break
+				fi
+			done
+			;;
+		esac
+	done) | $VORBISTAG "$file"
 }
 
 id3()
@@ -145,14 +148,15 @@ id3()
 		case "$field" in
 		*=*) value="${field#*=}";;
 		*)
-			value=""
-			for conv in $(eval echo \$$field); do
-				value=$($CUEPRINT -n $TRKNO -t "$conv\n" "$CUE_I")
-
-				if [ -n "$value" ]; then
-					break
-				fi
-			done
+			values=$(eval echo \$$field)
+			if [ "${values:0:1}" != '%' ]; then
+				value=$values
+			else
+				for conv in $values; do
+					value=$($CUEPRINT -n $TRKNO -t "$conv\n" "$CUE_I")
+					[ -n "$value" ] && break
+				done
+			fi
 			;;
 		esac
 
