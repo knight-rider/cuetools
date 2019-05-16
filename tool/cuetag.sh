@@ -11,8 +11,7 @@ CUE_I=""
 usage()
 {
 	echo
-	echo "usage: cuetag.sh <cuefile|tocfile> [file|tagfield]..."
-	echo "       cuetag.sh <cuefile|tocfile>"
+	echo "usage: cuetag.sh <cuefile|tocfile> [file|tag|tag=value]..."
 	echo
 	echo "cuetag.sh adds tags to files based on CUE/TOC information"
 	echo
