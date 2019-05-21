@@ -285,7 +285,7 @@ main()
 		[ "$file" != "$LBL" ] && mv -v "$file" "$LBL"
 
 		TFILE=`echo "FILE \"$LBL\" $TYPE\n"|sed 's|".*/|"|;s/\&/\\\&/g'`
-		TITLEARTIST=`echo "\n    TITLE \"$TITLE\"\n    PERFORMER \"$ARTIST\"\n"|sed 's|".*/|"|;s/\&/\\\&/g'`
+		TITLEARTIST=`echo "\n    TITLE \"$TITLE\"\n    PERFORMER \"$ARTIST\"\n"|sed 's/\&/\\\&/g'`
 		if [ "$IDX0" ]; then
 			sed "s|^.*TRACK.*$TRKNO.*|\n&$TITLEARTIST$IDX0\n$TFILE    INDEX 01 00:00:00|" "$CUE_O" > cue.out
 		else
