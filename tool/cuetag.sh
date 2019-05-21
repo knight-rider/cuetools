@@ -190,13 +190,17 @@ id3()
 # Wikipedia Style Capitalization Rules
 cap()
 {
-	local s=`echo $@|sed "s/\b./\u\0/g;
+	if [[ "$@" =~ [A-Z][A-Z] ]]; then
+		# ignore all-caps sentence
+		echo $@
+	else
+		echo $@|sed "s/\b./\u\0/g;
 		s/\(\w\)'\(.\)/\1'\L\2/g;
 		s/\s\(A\|An\|The\)\s/\L&/g;
 		s/\s\(And\|But\|Or\|Nor\)\s/\L&/g;
 		s/\s\(As\|At\|In\|On\|Upon\)\s/\L&/g;
-		s/\s\(For\|From\|Of\|Into\|To\|With\)\s/\L&/g;"`
-	echo $s
+		s/\s\(For\|From\|Of\|Into\|To\|With\)\s/\L&/g;"
+	fi
 }
 
 main()
