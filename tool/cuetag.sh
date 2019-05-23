@@ -129,7 +129,7 @@ id3()
 	# see http://id3lib.sourceforge.net/id3/idev1.html
 
 	[ -n "$fields" ] ||
-	fields="TITLE ALBUM ARTIST YEAR COMMENT GENRE TRACKNUMBER"
+	fields="TITLE ALBUM ALBUMARTIST ARTIST YEAR COMMENT GENRE TRACKNUMBER"
 
 	# fields' corresponding cueprint conversion characters
 	# separate alternates with a space
@@ -139,9 +139,10 @@ id3()
 	TRACKNUMBER='%n'
 
 	# The followings are taken from global variables
-#	TITLE='%t'
 #	ALBUM='%T'
+#	ALBUMARTIST='%C %P'
 #	ARTIST='%p'
+#	TITLE='%t'
 
 	for field in $fields; do
 		case "$field" in
@@ -166,6 +167,9 @@ id3()
 				;;
 			ALBUM)
 				$MP3TAG -A "$value" "$file"
+				;;
+			ALBUMARTIST)
+				$MP3TAG --TPE2 "$value" "$file"
 				;;
 			ARTIST)
 				$MP3TAG -a "$value" "$file"
