@@ -23,7 +23,7 @@ usage()
 	echo
 	echo "Supported tag fields:"
 	echo "ogg/flac: ALBUM ALBUMARTIST ARTIST CONTACT COPYRIGHT DATE DESCRIPTION DISCNUMBER GENRE ISRC LICENSE LOCATION ORGANIZATION PERFORMER TITLE TRACKNUMBER TRACKTOTAL VERSION"
-	echo "mp3: TITLE ALBUM ARTIST YEAR COMMENT GENRE TRACKNUMBER"
+	echo "mp3: TITLE ALBUM ALBUMARTIST ARTIST COMMENT DISCNUMBER GENRE TRACKNUMBER YEAR"
 	echo
 	echo "cuetag.sh uses cueprint, which must be in your path"
 }
@@ -129,12 +129,13 @@ id3()
 	# see http://id3lib.sourceforge.net/id3/idev1.html
 
 	[ -n "$fields" ] ||
-	fields="TITLE ALBUM ALBUMARTIST ARTIST YEAR COMMENT GENRE TRACKNUMBER"
+	fields="TITLE ALBUM ALBUMARTIST ARTIST COMMENT DISCNUMBER GENRE TRACKNUMBER YEAR"
 
 	# fields' corresponding cueprint conversion characters
 	# separate alternates with a space
 	YEAR='%Y'
 	COMMENT='%c'
+	DISCNUMBER='%D'
 	GENRE='%g'
 	TRACKNUMBER='%n'
 
@@ -173,6 +174,9 @@ id3()
 				;;
 			ARTIST)
 				$MP3TAG -a "$value" "$file"
+				;;
+			DISCNUMBER)
+				$MP3TAG --TPOS "$value" "$file"
 				;;
 			YEAR)
 				$MP3TAG -y "$value" "$file"
