@@ -261,7 +261,7 @@ main()
 
 	echo PERFORMER \"$ALBUMARTIST\" > "$CUE_O"
 	echo TITLE \"$ALBUM\" >> "$CUE_O"
-	grep -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I" | sed 's/^\xEF\xBB\xBF//;s/\r//' >> "$CUE_O"
+	grep -ve '^$' -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I"|sed 's/^\xEF\xBB\xBF//;s/\r//'>>"$CUE_O"
 
 	for file in "${FILE[@]}"; do
 		IDX0=`cuebreakpoints -l "$CUE_I"|grep "^$TRKNO\s"|sed "s/.*\s//;s/./    INDEX 00 &/;s/\./:/"`
