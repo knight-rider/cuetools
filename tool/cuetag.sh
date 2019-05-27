@@ -164,7 +164,7 @@ id3()
 cap()
 {
 	if [[ "$@" =~ [A-Z][A-Z] ]]; then
-		# ignore all-caps sentence
+		# only trim all-caps sentence
 		echo $@|awk '{$1=$1}1'
 	else
 		echo $@|awk '{$1=$1}1'|sed "s/\b./\u\0/g;
@@ -238,7 +238,7 @@ main()
 
 	echo PERFORMER \"$ALBUMARTIST\" > "$CUE_O"
 	echo TITLE \"$ALBUM\" >> "$CUE_O"
-	grep -ve '^$' -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I"|sed 's/^\xEF\xBB\xBF//;s/\r//'>>"$CUE_O"
+	grep -ve '^\s*$' -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I"|sed 's/^\xEF\xBB\xBF//;s/\r//'>>"$CUE_O"
 
 	for file in "${FILE[@]}"; do
 		IDX0=`cuebreakpoints -l "$CUE_I"|grep "^$TRACKNUMBER\s"|sed "s/.*\s//;s/./    INDEX 00 &/;s/\./:/"`
