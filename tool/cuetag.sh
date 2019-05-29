@@ -168,7 +168,7 @@ cap()
 		echo $@|awk '{$1=$1}1'
 	else
 		echo $@|awk '{$1=$1}1'|sed "s/\b./\u\0/g;
-		s/\b'\(D\|Ll\|M\|Re\|S\|T\)/\L&/g;
+		s/\b'\(D\|Ll\|M\|Re\|S\|T\)\b/\L&/g;
 		s/\s\(A\|An\|The\)\s/\L&/g;
 		s/\s\(And\|But\|Or\|Nor\)\s/\L&/g;
 		s/\s\(As\|At\|By\|In\|On\|Upon\)\s/\L&/g;
