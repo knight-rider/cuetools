@@ -167,9 +167,8 @@ cap()
 		# only trim all-caps sentence
 		echo $@|awk '{$1=$1}1'
 	else
-#		s/\(\w\)'\(.\)/\1'\L\2/g;
 		echo $@|awk '{$1=$1}1'|sed "s/\b./\u\0/g;
-		s/\(\w\)'\(D\|Ll\|M\|Re\|S\|T\)/\1'\L\2/g;
+		s/\b'\(D\|Ll\|M\|Re\|S\|T\)/\L&/g;
 		s/\s\(A\|An\|The\)\s/\L&/g;
 		s/\s\(And\|But\|Or\|Nor\)\s/\L&/g;
 		s/\s\(As\|At\|By\|In\|On\|Upon\)\s/\L&/g;
