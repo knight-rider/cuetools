@@ -14,6 +14,7 @@
 #include <stdbool.h>
 
 #include "libcue.h"
+#include "time.h"
 
 #if HAVE_CONFIG_H
 #	include "config.h"
