@@ -5,21 +5,22 @@
 # v1.3 sen
 
 [[ -z `which shnsplit` ]] && exit 1
-SDIR=`pwd`
+DIR=`pwd`
+CUE=`ls *.cue`
 
-if [ "$1" = "" ]; then
-	DIR=$SDIR
-else
+while [ "$1" ]; do
 	case $1 in
 	-h | --help )
-		echo "Usage: cuesplit [Path]"
+		echo "Usage: cuesplit [path|cuefile]"
 		echo "	   The default path is the current directory."
 		exit
 		;;
 	* )
-		DIR=$1
+		[[ -d $1 ]] && DIR=$1
+		[[ -f $1 ]] && CUE=$1
+		shift
 	esac
-fi
+done
 
 echo -e "\
 
@@ -32,53 +33,53 @@ TYPE=`ls -t1`
 case $TYPE in
 *.ape*)
 	mkdir split
-	shnsplit -d split -f *.cue -o "flac flac -V --best -o %f -" *.ape -t "%n %p - %t"
+	shnsplit -d split -f "$CUE" -o "flac flac -V --best -o %f -" *.ape -t "%n %p - %t"
 	rm -f split/00*pregap*
-	cuetag.sh *.cue split/*.flac
+	cuetag.sh "$CUE" split/*.flac
 	exit
 	;;
 
 *.flac*)
 	mkdir split
-	shnsplit -d split -f *.cue -o "flac flac -V --best -o %f -" *.flac -t "%n %p - %t"
+	shnsplit -d split -f "$CUE" -o "flac flac -V --best -o %f -" *.flac -t "%n %p - %t"
 	rm -f split/00*pregap*
-	cuetag.sh *.cue split/*.flac
+	cuetag.sh "$CUE" split/*.flac
 	exit
 	;;
 
 *.mp3*)
-	mp3splt -no "@n @p - @t (split)" -c *.cue *.mp3
-	cuetag.sh *.cue *split\).mp3
+	mp3splt -no "@n @p - @t (split)" -c "$CUE" *.mp3
+	cuetag.sh "$CUE" *split\).mp3
 	exit
 	;;
 
 *.ogg*)
-	mp3splt -no "@n @p - @t (split)" -c *.cue *.ogg
-	cuetag.sh *.cue *split\).ogg
+	mp3splt -no "@n @p - @t (split)" -c "$CUE" *.ogg
+	cuetag.sh "$CUE" *split\).ogg
 	exit
 	;;
 
 *.tta*)
 	mkdir split
-	shnsplit -d split -f *.cue -o "flac flac -V --best -o %f -" *.tta -t "%n %p - %t"
+	shnsplit -d split -f "$CUE" -o "flac flac -V --best -o %f -" *.tta -t "%n %p - %t"
 	rm -f split/00*pregap*
-	cuetag.sh *.cue split/*.flac
+	cuetag.sh "$CUE" split/*.flac
 	exit
 	;;
 
 *.wv*)
 	mkdir split
-	shnsplit -d split -f *.cue -o "flac flac -V --best -o %f -" *.wv -t "%n %p - %t"
+	shnsplit -d split -f "$CUE" -o "flac flac -V --best -o %f -" *.wv -t "%n %p - %t"
 	rm -f split/00*pregap*
-	cuetag.sh *.cue split/*.flac
+	cuetag.sh "$CUE" split/*.flac
 	exit
 	;;
 
 *.wav*)
 	mkdir split
-	shnsplit -d split -f *.cue -o "flac flac -V --best -o %f -" *.wav -t "%n %p - %t"
+	shnsplit -d split -f "$CUE" -o "flac flac -V --best -o %f -" *.wav -t "%n %p - %t"
 	rm -f split/00*pregap*
-	cuetag.sh *.cue split/*.flac
+	cuetag.sh "$CUE" split/*.flac
 	exit
 	;;
 
