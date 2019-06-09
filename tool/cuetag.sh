@@ -6,7 +6,7 @@
 
 # https://wiki.hydrogenaud.io/index.php?title=Tag_Mapping
 
-CUEPRINT=`which cueprint`
+[ `which cueprint` ] || exit
 CUE_I=""
 
 # print usage instructions
@@ -27,6 +27,7 @@ usage()
 	echo "mp3:      ALBUM ALBUMARTIST ARTIST COMPOSER DATE DESCRIPTION DISCNUMBER GENRE ISRC TITLE TRACKNUMBER"
 	echo
 	echo "cuetag.sh uses cueprint, which must be in your path"
+	exit
 }
 
 # Vorbis Comments
@@ -76,7 +77,7 @@ vorbis()
 				continue
 			fi
 			for conv in $values; do
-				value=$($CUEPRINT -n $TRACKNUMBER -t "$conv\n" "$CUE_I")
+				value=$(cueprint -n $TRACKNUMBER -t "$conv\n" "$CUE_I")
 				if [ -n "$value" ]; then
 					echo "$field=$value"
 					break
@@ -93,7 +94,7 @@ id3()
 		|| MP3TAG=$(which id3v2)
 	if [ -z "${MP3TAG}" ]; then
 		echo "ERROR: not found '(m)id3v2'."
-		exit 1
+		exit
 	fi
 
 	TRACKNUMBER=$1; shift
@@ -113,7 +114,7 @@ id3()
 				value=$values
 			else
 				for conv in $values; do
-					value=$($CUEPRINT -n $TRACKNUMBER -t "$conv\n" "$CUE_I")
+					value=$(cueprint -n $TRACKNUMBER -t "$conv\n" "$CUE_I")
 					[ -n "$value" ] && break
 				done
 			fi
@@ -178,22 +179,18 @@ cap()
 
 main()
 {
-	if [[ $# -lt 1 || -z $CUEPRINT ]]; then
-		usage
-		exit
-	fi
-
+	[ $# -lt 1 ] && usage
 	CUE_I=$1
 	shift
 
-	ntrack=$($CUEPRINT -d '%N' "$CUE_I")
+	ntrack=$(cueprint -d '%N' "$CUE_I")
 	TRACKNUMBER=0
 
 	if [[ -z $@ ]]; then
 		echo "WARNING: no filename given, will use name(s) in CUE/TOC sheet"
 		while [ $TRACKNUMBER -lt $ntrack ]; do
 			TRACKNUMBER=$(($TRACKNUMBER + 1))
-			files[$TRACKNUMBER]=`$CUEPRINT -n $TRACKNUMBER -t '%f' "$CUE_I"`
+			files[$TRACKNUMBER]=`cueprint -n $TRACKNUMBER -t '%f' "$CUE_I"`
 		done
 		set "${files[@]}"
 		TRACKNUMBER=0
@@ -202,7 +199,7 @@ main()
 	NFILE=0 FIELDS=
 	for arg in "$@"; do
 		case "$arg" in
-		*.[Cc][Uu][Ee] | *.[Tt][Oo][Cc]) echo "ERROR: multiple CUE/TOC input"; exit 1;;
+		*.[Cc][Uu][Ee] | *.[Tt][Oo][Cc]) echo "ERROR: multiple CUE/TOC input"; exit;;
 		*.[Ff][Ll][Aa][Cc] | *.[Oo][Gg][Gg] | *.[Mm][Pp]3 | *.[Tt][Xx][Tt])
 			[[ ! -f $arg ]] && continue
 			NFILE=$(($NFILE + 1))
@@ -214,7 +211,7 @@ main()
 
 	if [ $NFILE -ne $ntrack ]; then
 		echo "ERROR: number of files ($NFILE) does not match number of tracks ($ntrack)"
-		exit 1
+		exit
 	fi
 
 	# fields' corresponding cueprint conversion characters
@@ -225,10 +222,10 @@ main()
 	ISRC='%i %u'
 	PERFORMER='%p'
 	TRACKTOTAL='%02N'
-	ALBUM=`cap $($CUEPRINT -d '%T' "$CUE_I")`
-	ALBUMARTIST=`cap $($CUEPRINT -d '%C %P' "$CUE_I")`
-	DATE=`$CUEPRINT -d '%Y' "$CUE_I"`
-	DISCNUMBER=`$CUEPRINT -d '%D' "$CUE_I"`
+	ALBUM=`cap $(cueprint -d '%T' "$CUE_I")`
+	ALBUMARTIST=`cap $(cueprint -d '%C %P' "$CUE_I")`
+	DATE=`cueprint -d '%Y' "$CUE_I"`
+	DISCNUMBER=`cueprint -d '%D' "$CUE_I"`
 
 	CUE_O=`echo $(dirname "${FILE[1]}")/$(echo "$ALBUMARTIST - $DATE - $ALBUM CD$DISCNUMBER.cue"|sed 's/ CD\./\./;s.[/|\].-.g')|sed 's|^\./||'`
 	echo "Creating multi-file CUE sheet: $CUE_O"
@@ -243,8 +240,8 @@ main()
 	for file in "${FILE[@]}"; do
 		IDX0=`cuebreakpoints -l "$CUE_I"|grep "^$TRACKNUMBER\s"|sed "s/.*\s//;s/./    INDEX 00 &/;s/\./:/"`
 		TRACKNUMBER=`echo $(expr $TRACKNUMBER + 1)|sed 's/^.$/0&/'`
-		ARTIST=`cap $($CUEPRINT -n $TRACKNUMBER -t '%c %p' "$CUE_I")`
-		TITLE=`cap $($CUEPRINT -n $TRACKNUMBER -t '%t' "$CUE_I")`
+		ARTIST=`cap $(cueprint -n $TRACKNUMBER -t '%c %p' "$CUE_I")`
+		TITLE=`cap $(cueprint -n $TRACKNUMBER -t '%t' "$CUE_I")`
 		LBL=`echo $(dirname "$file")/$(echo $TRACKNUMBER $ARTIST - $TITLE|sed 's.[/|\].-.g')|sed 's|^\./||'`
 		TYPE="WAVE"
 

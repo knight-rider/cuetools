@@ -4,7 +4,7 @@
 # optional dependencies:	flac, mac, wavpack, ttaenc
 # v1.3 sen
 
-[[ -z `which shnsplit` ]] && exit 1
+[ `which shnsplit` ] || exit
 DIR=`pwd`
 CUE=`ls *.cue`
 
