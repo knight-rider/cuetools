@@ -5,6 +5,7 @@
 # v1.3 sen
 
 [ `which shnsplit` ] || exit
+[ `which wvunpack` ] || exit
 DIR=`pwd`
 CUE=`ls *.cue`
 
