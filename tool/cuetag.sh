@@ -7,6 +7,7 @@
 # https://wiki.hydrogenaud.io/index.php?title=Tag_Mapping
 
 [ `which cueprint` ] || exit
+[ `which cuebreakpoints` ] || exit
 CUE_I=""
 
 # print usage instructions
@@ -25,8 +26,6 @@ usage()
 	echo "Supported tag fields:"
 	echo "ogg/flac: ALBUM ALBUMARTIST ARTIST COMPOSER DATE DESCRIPTION DISCNUMBER GENRE ISRC PERFORMER TITLE TRACKNUMBER TRACKTOTAL"
 	echo "mp3:      ALBUM ALBUMARTIST ARTIST COMPOSER DATE DESCRIPTION DISCNUMBER GENRE ISRC TITLE TRACKNUMBER"
-	echo
-	echo "cuetag.sh uses cueprint, which must be in your path"
 	exit
 }
 
