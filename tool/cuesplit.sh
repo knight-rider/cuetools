@@ -7,7 +7,7 @@
 [ `which shnsplit` ] || exit
 [ `which wvunpack` ] || exit
 DIR=`pwd`
-CUE=`ls *.cue`
+[ $# -gt 0 ] || set *.cue
 
 while [ "$1" ]; do
 	case $1 in
@@ -24,8 +24,8 @@ while [ "$1" ]; do
 done
 
 echo -e "\
-
-Directory: $DIR
+CUE: $CUE
+DIR: $DIR
 ________________________________________
 "
 cd "$DIR"
