@@ -6,26 +6,22 @@
 
 # https://wiki.hydrogenaud.io/index.php?title=Tag_Mapping
 
-[ `which cueprint` ] || exit
-[ `which cuebreakpoints` ] || exit
-CUE_I=""
-
 # print usage instructions
 usage()
 {
 	echo "usage: cuetag.sh <cuefile|tocfile> [file|tag|tag=value]..."
 	echo
 	echo "cuetag.sh adds tags to files based on CUE/TOC information"
+	echo "          also creates M3U & (non-compliant) multi-file CUE sheets"
 	echo
 	echo "Supported formats (format extension, format name, tagging utility):"
 	echo "ogg, Ogg Vorbis, vorbiscomment"
 	echo "flac, FLAC, metaflac"
-	echo "mp3, MP3, mp3info"
+	echo "mp3, MP3, (m)id3v2"
 	echo "txt, Vorbis Comment Text File, tee"
 	echo
 	echo "Supported tag fields:"
-	echo "ogg/flac: ALBUM ALBUMARTIST ARTIST COMPOSER DATE DESCRIPTION DISCNUMBER GENRE ISRC PERFORMER TITLE TRACKNUMBER TRACKTOTAL"
-	echo "mp3:      ALBUM ALBUMARTIST ARTIST COMPOSER DATE DESCRIPTION DISCNUMBER GENRE ISRC TITLE TRACKNUMBER"
+	echo "ALBUM ALBUMARTIST ARTIST COMPOSER DATE DESCRIPTION DISCNUMBER GENRE ISRC PERFORMER TITLE TRACKNUMBER TRACKTOTAL"
 	exit
 }
 
@@ -33,40 +29,27 @@ usage()
 # for FLAC and Ogg Vorbis files
 vorbis()
 {
-	TRACKNUMBER=$1; shift
-	file="$1"; shift
-	fields="$@"
-
-	# FLAC tagging
-	#  --remove-all-tags overwrites existing comments
-	METAFLAC="metaflac --remove-all-tags --import-tags-from=-"
-
-	# Ogg Vorbis tagging
-	# -w overwrites existing comments
-	# -a appends to existing comments
-	VORBISCOMMENT="vorbiscomment -w -c -"
-
-	# VC text file format
-	# TODO: this also outputs to stdout
-	TXTFILE="tee"
+	[ `which metaflac` ] || exit
+	[ `which vorbiscomment` ] || exit
 
 	case "$file" in
 	*.[Ff][Ll][Aa][Cc])
-		VORBISTAG=$METAFLAC
+		# FLAC tagging
+		#  --remove-all-tags overwrites existing comments
+		VORBISTAG="metaflac --remove-all-tags --import-tags-from=-"
 		;;
 	*.[Oo][Gg][Gg])
-		VORBISTAG=$VORBISCOMMENT
+		# Ogg Vorbis tagging
+		# -w overwrites existing comments
+		# -a appends to existing comments
+		VORBISTAG="vorbiscomment -w -c -"
 		;;
 	*.[Tt][Xx][Tt])
-		VORBISTAG=$TXTFILE
+		VORBISTAG="tee"
 		;;
 	esac
 
-	# space separated list of recommended standard field names
-	[ -n "$fields" ] ||
-	fields='ALBUM ALBUMARTIST ARTIST COMPOSER DATE DESCRIPTION DISCNUMBER GENRE ISRC PERFORMER TITLE TRACKNUMBER TRACKTOTAL'
-
-	(for field in $fields; do
+	(for field in $FIELDS; do
 		case "$field" in
 		(*=*) echo "$field";;
 		(*)
@@ -89,22 +72,13 @@ vorbis()
 
 id3()
 {
-	MP3TAG=$(which mid3v2) \
-		|| MP3TAG=$(which id3v2)
+	MP3TAG=$(which mid3v2-3 mid3v2 id3v2 2>/dev/null|head -n 1)
 	if [ -z "${MP3TAG}" ]; then
 		echo "ERROR: not found '(m)id3v2'."
 		exit
 	fi
 
-	TRACKNUMBER=$1; shift
-	file="$1"; shift
-	fields="$@"
-
-	# space separated list of ID3 v1.1 tags
-	[ -n "$fields" ] ||
-	fields="ALBUM ALBUMARTIST ARTIST COMPOSER DATE DESCRIPTION DISCNUMBER GENRE ISRC TITLE TRACKNUMBER"
-
-	for field in $fields; do
+	for field in $FIELDS; do
 		case "$field" in
 		*=*) value="${field#*=}";;
 		*)
@@ -152,8 +126,14 @@ id3()
 			ISRC)
 				$MP3TAG --TSRC "$value" "$file"
 				;;
+			PERFORMER)
+				$MP3TAG --IPLS "$value" "$file"
+				;;
 			TRACKNUMBER)
 				$MP3TAG -T "$value" "$file"
+				;;
+			TRACKTOTAL)
+				$MP3TAG --TRCK "$TRACKNUMBER/$value" "$file"
 				;;
 			esac
 		fi
@@ -163,31 +143,29 @@ id3()
 # Wikipedia Style Capitalization Rules
 cap()
 {
-	if [[ "$@" =~ [A-Z][A-Z] ]]; then
-		# only trim all-caps sentence
-		echo $@|awk '{$1=$1}1'
-	else
-		echo $@|awk '{$1=$1}1'|sed "s/\b./\u\0/g;
-		s/\b'\(D\|Ll\|M\|Re\|S\|T\|Ve\)\b/\L&/g;
-		s/\s\(A\|An\|The\)\s/\L&/g;
-		s/\s\(And\|But\|Or\|Nor\)\s/\L&/g;
-		s/\s\(As\|At\|By\|In\|On\|Upon\)\s/\L&/g;
-		s/\s\(For\|From\|Of\|Into\|To\|With\)\s/\L&/g;"
-	fi
+	echo $@|awk '{$1=$1}1'|sed "s/\b./\u\0/g;
+	s/\b'\(D\|Ll\|M\|Re\|S\|T\|Ve\)\b/\L&/g;
+	s/\s\(A\|An\|The\)\s/\L&/g;
+	s/\s\(And\|But\|Or\|Nor\)\s/\L&/g;
+	s/\s\(As\|At\|By\|In\|On\|Upon\)\s/\L&/g;
+	s/\s\(For\|From\|Of\|Into\|To\|With\)\s/\L&/g;"
 }
 
 main()
 {
+	[ `which cueprint` ] || exit
+	[ `which cuebreakpoints` ] || exit
+
 	[ $# -lt 1 ] && usage
 	CUE_I=$1
 	shift
 
-	ntrack=$(cueprint -d '%N' "$CUE_I")
+	NTRACK=$(cueprint -d '%N' "$CUE_I")
 	TRACKNUMBER=0
 
 	if [[ -z $@ ]]; then
 		echo "WARNING: no filename given, will use name(s) in CUE/TOC sheet"
-		while [ $TRACKNUMBER -lt $ntrack ]; do
+		while [ $TRACKNUMBER -lt $NTRACK ]; do
 			TRACKNUMBER=$(($TRACKNUMBER + 1))
 			files[$TRACKNUMBER]=`cueprint -n $TRACKNUMBER -t '%f' "$CUE_I"`
 		done
@@ -208,23 +186,25 @@ main()
 		esac
 	done
 
-	if [ $NFILE -ne $ntrack ]; then
-		echo "ERROR: number of files ($NFILE) does not match number of tracks ($ntrack)"
+	if [ $NFILE -ne $NTRACK ]; then
+		echo "ERROR: number of files ($NFILE) does not match number of tracks ($NTRACK)"
 		exit
 	fi
 
+	# Space separated list of Vorbis tags
+	[ -n "$FIELDS" ] ||
+	FIELDS="ALBUM ALBUMARTIST ARTIST COMPOSER DATE DESCRIPTION DISCNUMBER GENRE ISRC PERFORMER TITLE TRACKNUMBER TRACKTOTAL"
+
 	# fields' corresponding cueprint conversion characters
 	# separate alternates with a space
-	COMPOSER='%c'
-	DESCRIPTION='%m'
-	GENRE='%g'
-	ISRC='%i %u'
-	PERFORMER='%p'
-	TRACKTOTAL='%02N'
 	ALBUM=`cap $(cueprint -d '%T' "$CUE_I")`
 	ALBUMARTIST=`cap $(cueprint -d '%C %P' "$CUE_I")`
 	DATE=`cueprint -d '%Y' "$CUE_I"`
 	DISCNUMBER=`cueprint -d '%D' "$CUE_I"`
+	DESCRIPTION='%m'
+	GENRE='%g'
+	ISRC='%i %u'
+	TRACKTOTAL='%02N'
 
 	CUE_O=`echo $(dirname "${FILE[1]}")/$(echo "$ALBUMARTIST - $DATE - $ALBUM CD$DISCNUMBER.cue"|sed 's/ CD\./\./;s.[/|\].-.g')|sed 's|^\./||'`
 	echo "Creating multi-file CUE sheet: $CUE_O"
@@ -232,34 +212,43 @@ main()
 	[[ -f $CUE_O ]] && mv -v "$CUE_O" "$BAK"
 	[[ $CUE_I = $CUE_O ]] && CUE_I=$BAK
 
-	echo PERFORMER \"$ALBUMARTIST\" > "$CUE_O"
-	echo TITLE \"$ALBUM\" >> "$CUE_O"
-	grep -ve '^\s*$' -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I"|sed 's/^\xEF\xBB\xBF//;s/\r//'>>"$CUE_O"
+	M3U_O=`echo "$CUE_O"|sed 's/cue$/m3u/'`
+	echo "Creating M3U sheet: $M3U_O"
+	echo "#EXTM3U" > $M3U_O
+
+	echo PERFORMER \"$ALBUMARTIST\" > $CUE_O
+	echo TITLE \"$ALBUM\" >> $CUE_O
+	grep -ve '^\s*$' -ve PERFORMER -ve TITLE -ve FILE -ve "INDEX 00" -ve "INDEX 01" "$CUE_I"|sed 's/^\xEF\xBB\xBF//;s/\r//'>>$CUE_O
 
 	for file in "${FILE[@]}"; do
 		IDX0=`cuebreakpoints -l "$CUE_I"|grep "^$TRACKNUMBER\s"|sed "s/.*\s//;s/./    INDEX 00 &/;s/\./:/"`
 		TRACKNUMBER=`echo $(expr $TRACKNUMBER + 1)|sed 's/^.$/0&/'`
 		ARTIST=`cap $(cueprint -n $TRACKNUMBER -t '%c %p' "$CUE_I")`
+		COMPOSER=`cap $(cueprint -n $TRACKNUMBER -t '%c' "$CUE_I")`
+		PERFORMER=`cap $(cueprint -n $TRACKNUMBER -t '%p' "$CUE_I")`
 		TITLE=`cap $(cueprint -n $TRACKNUMBER -t '%t' "$CUE_I")`
 		LBL=`echo $(dirname "$file")/$(echo $TRACKNUMBER $ARTIST - $TITLE|sed 's.[/|\].-.g')|sed 's|^\./||'`
 		TYPE="WAVE"
 
+		DURATION=0
 		case $file in
 		*.[Ff][Ll][Aa][Cc])
-			vorbis $TRACKNUMBER "$file" $FIELDS
+			vorbis
 			LBL="$LBL.flac"
+			DURATION=`metaflac --show-total-samples --show-sample-rate "$file"| tr '\n' ' '|awk '{print $1/$2}'`
 			;;
 		*.[Oo][Gg][Gg])
-			vorbis $TRACKNUMBER "$file" $FIELDS
+			vorbis
 			LBL="$LBL.ogg"
 			;;
 		*.[Mm][Pp]3)
-			id3 $TRACKNUMBER "$file" $FIELDS
+			id3
 			LBL="$LBL.mp3"
 			TYPE="MP3"
+			[ `which mp3info` ] && DURATION=`mp3info -p "%S" "$file"`
 			;;
 		*.[Tt][Xx][Tt])
-			vorbis $TRACKNUMBER "$file"
+			vorbis
 			LBL="$LBL.txt"
 			;;
 		esac
@@ -273,6 +262,9 @@ main()
 			sed "s|^.*TRACK.*$TRACKNUMBER.*|\n$TFILE&$TITLEARTIST    INDEX 01 00:00:00|" "$CUE_O" > cue.out
 		fi
 		mv cue.out "$CUE_O"
+
+		echo "#EXTINF:$DURATION, $ARTIST - $TITLE" >> $M3U_O
+		echo $LBL|sed 's|.*/||' >> $M3U_O
 	done
 }
 
