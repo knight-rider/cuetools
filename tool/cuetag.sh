@@ -157,9 +157,13 @@ main()
 	[ `which cuebreakpoints` ] || exit
 
 	[ $# -lt 1 ] && usage
-	CUE_I=$1
-	shift
+	[ ! -r $1 ] && usage
+	case "$1" in
+	*.[Cc][Uu][Ee] | *.[Tt][Oo][Cc]) CUE_I=$1;;
+	*) usage;;
+	esac
 
+	shift
 	NTRACK=$(cueprint -d '%N' "$CUE_I")
 	TRACKNUMBER=0
 
